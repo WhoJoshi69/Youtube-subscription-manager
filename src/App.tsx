@@ -75,7 +75,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-black dark:to-gray-900 text-gray-900 dark:text-white">
       <Header
         darkMode={darkMode}
         onThemeToggle={toggleTheme}
@@ -84,7 +84,7 @@ function App() {
       />
       
       <div className="container mx-auto px-4 sm:px-6 py-6">
-        <main className="flex flex-col items-center space-y-8">
+        <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
           {activeSection === 'playlist' ? (
             <>
               <PlaylistFetcher

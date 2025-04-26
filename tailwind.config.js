@@ -44,6 +44,12 @@ module.exports = {
           '100%': { opacity: '1' }
         }
       },
+      borderRadius: {
+        '2xl': '1rem', // You can adjust this value to make corners more or less rounded
+      },
+      backdropBlur: {
+        xs: '2px',
+      }
     },
   },
   plugins: [],
