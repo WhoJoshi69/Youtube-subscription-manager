@@ -7,6 +7,7 @@ export interface Video {
   selected: boolean;
   watched?: boolean;
   url?: string;
+  viewCount?: number;
 }
 
 export interface PlaylistFetcherProps {

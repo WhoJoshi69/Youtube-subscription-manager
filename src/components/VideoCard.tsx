@@ -1,7 +1,8 @@
 import React from 'react';
 import { VideoCardProps } from '../types';
-import { Calendar, CheckSquare, Square, PlayCircle } from 'lucide-react';
+import { Calendar, CheckSquare, Square, PlayCircle, Eye } from 'lucide-react';
 import { formatPublishedDate } from '../utils/dateUtils';
+import { formatViewCount } from '../utils/formatters';
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onToggleSelect }) => {
   const handleThumbnailClick = () => {
@@ -64,9 +65,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onToggleSelect }) => {
           <p className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors truncate max-w-[70%]">
             {video.channelTitle}
           </p>
-          <div className="flex items-center text-gray-500 dark:text-gray-400">
-            <Calendar size={12} className="mr-1" />
-            <span title={video.publishedAt}>{formattedDate}</span>
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            {video.viewCount !== undefined && (
+              <div className="flex items-center" title={`${video.viewCount.toLocaleString()} views`}>
+                <Eye size={12} className="mr-1" />
+                <span>{formatViewCount(video.viewCount)}</span>
+              </div>
+            )}
+            <div className="flex items-center" title={video.publishedAt}>
+              <Calendar size={12} className="mr-1" />
+              <span>{formattedDate}</span>
+            </div>
           </div>
         </div>
       </div>
