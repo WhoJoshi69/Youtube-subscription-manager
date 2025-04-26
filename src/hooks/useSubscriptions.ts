@@ -116,6 +116,24 @@ export const useSubscriptions = () => {
     fetchSubscriptionVideos();
   }, [subscribedChannels, filteredChannels]);
 
+  const hideAllChannels = async () => {
+    try {
+      await updateFilteredChannels(subscribedChannels.map(channel => channel.id));
+      setFilteredChannels(subscribedChannels.map(channel => channel.id));
+    } catch (err) {
+      setError('Failed to hide all channels');
+    }
+  };
+
+  const showAllChannels = async () => {
+    try {
+      await updateFilteredChannels([]);
+      setFilteredChannels([]);
+    } catch (err) {
+      setError('Failed to show all channels');
+    }
+  };
+
   return {
     subscribedChannels,
     filteredChannels,
@@ -125,6 +143,8 @@ export const useSubscriptions = () => {
     subscribeToChannel,
     unsubscribeFromChannel,
     toggleChannelFilter,
-    refreshVideos: fetchSubscriptionVideos
+    refreshVideos: fetchSubscriptionVideos,
+    hideAllChannels,
+    showAllChannels
   };
 }; 

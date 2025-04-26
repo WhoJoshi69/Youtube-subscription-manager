@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import VideoGrid from './VideoGrid';
 import { Channel } from '../types';
-import { Bell, BellOff, Filter, RefreshCw, X } from 'lucide-react';
+import { Eye, EyeOff, Filter, RefreshCw, X } from 'lucide-react';
 
 const Subscriptions: React.FC = () => {
   const {
@@ -13,7 +13,9 @@ const Subscriptions: React.FC = () => {
     error,
     unsubscribeFromChannel,
     toggleChannelFilter,
-    refreshVideos
+    refreshVideos,
+    hideAllChannels,
+    showAllChannels
   } = useSubscriptions();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -49,12 +51,30 @@ const Subscriptions: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Filter Channels</h3>
-            <button
-              onClick={() => setShowFilters(false)}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-            >
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={showAllChannels}
+                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                title="Show all channels"
+              >
+                <Eye size={16} />
+                <span>Show All</span>
+              </button>
+              <button
+                onClick={hideAllChannels}
+                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                title="Hide all channels"
+              >
+                <EyeOff size={16} />
+                <span>Hide All</span>
+              </button>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {subscribedChannels.map(channel => (
@@ -120,7 +140,7 @@ const ChannelFilterItem: React.FC<{
         }`}
         title={isFiltered ? 'Show channel' : 'Hide channel'}
       >
-        {isFiltered ? <BellOff size={16} /> : <Bell size={16} />}
+        {isFiltered ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
       <button
         onClick={onUnsubscribe}
