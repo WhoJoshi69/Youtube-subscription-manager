@@ -11,6 +11,8 @@ import { Auth } from './components/Auth';
 import { migrateWatchHistory } from './utils/migrateHistory';
 import Header from './components/Header';
 
+type Section = 'playlist' | 'subscriptions' | 'history';
+
 function App() {
   const {
     videos,
@@ -25,8 +27,39 @@ function App() {
   } = usePlaylist();
 
   const [darkMode, setDarkMode] = useState(true);
-  const [activeSection, setActiveSection] = useState<'playlist' | 'subscriptions' | 'history'>('playlist');
   const [session, setSession] = useState(null);
+
+  // Initialize activeSection from URL or default to 'playlist'
+  const [activeSection, setActiveSection] = useState<Section>(() => {
+    // Get the path from the URL (removing the leading slash)
+    const path = window.location.pathname.substring(1);
+    // Check if it's a valid section
+    return (path === 'playlist' || path === 'subscriptions' || path === 'history') 
+      ? path as Section 
+      : 'playlist';
+  });
+
+  // Update URL when section changes
+  const handleSectionChange = (section: Section) => {
+    setActiveSection(section);
+    // Update the URL without full page reload
+    window.history.pushState({}, '', `/${section}`);
+  };
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.substring(1);
+      if (path === 'playlist' || path === 'subscriptions' || path === 'history') {
+        setActiveSection(path as Section);
+      } else {
+        setActiveSection('playlist');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Check for preferred color scheme
   useEffect(() => {
@@ -80,7 +113,7 @@ function App() {
         darkMode={darkMode}
         onThemeToggle={toggleTheme}
         activeSection={activeSection}
-        onSectionChange={(section) => setActiveSection(section)}
+        onSectionChange={handleSectionChange}
       />
       
       <div className="container mx-auto px-4 sm:px-6 py-6">

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/(playlist|subscriptions|history)", "destination": "/" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+} 
