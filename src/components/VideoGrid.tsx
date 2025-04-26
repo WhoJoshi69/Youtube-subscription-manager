@@ -19,6 +19,7 @@ type SortOption = 'newest' | 'oldest' | 'title' | 'views';
 const VideoGrid: React.FC<VideoGridProps> = ({
   videos,
   onToggleSelect,
+  onSelectAll,
   onMarkAsWatched,
   isLoading,
   showChannelNames = false
@@ -36,13 +37,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const handleSelectAll = () => {
     const newSelectedState = !isAllSelected;
     setIsAllSelected(newSelectedState);
-    const videoIds = videos.map(video => video.id);
-    onToggleSelect(newSelectedState ? videoIds : []);
+    // If deselecting, pass empty array to clear all selections
+    onSelectAll(newSelectedState ? videos.map(video => video.id) : []);
   };
 
-  const handleVideoWatched = useCallback((videoId: string) => {
+  const handleToggleSelect = (videoId: string) => {
     onToggleSelect([videoId]);
-  }, [onToggleSelect]);
+  };
 
   // Sort videos based on selected option
   const sortedVideos = useMemo(() => {
@@ -198,7 +199,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             key={video.id}
             video={video}
             isWatched={watchedVideoIds.has(video.id)}
-            onToggleSelect={onToggleSelect}
+            onToggleSelect={handleToggleSelect}
             onMarkAsWatched={onMarkAsWatched}
           />
         ))}

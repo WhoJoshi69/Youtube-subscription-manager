@@ -98,6 +98,22 @@ const History: React.FC = () => {
     return filtered;
   }, [watchedVideos, searchQuery, selectedChannels, timeRange, sortOrder]);
 
+  const handleToggleSelect = (videoIds: string[]) => {
+    const updatedVideos = watchedVideos.map(video => ({
+      ...video,
+      selected: videoIds.includes(video.id) ? !video.selected : video.selected
+    }));
+    setWatchedVideos(updatedVideos);
+  };
+
+  const handleSelectAll = (videoIds: string[]) => {
+    const updatedVideos = watchedVideos.map(video => ({
+      ...video,
+      selected: videoIds.length > 0 ? videoIds.includes(video.id) : false
+    }));
+    setWatchedVideos(updatedVideos);
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
@@ -233,14 +249,13 @@ const History: React.FC = () => {
           </div>
           <VideoGrid
             videos={filteredVideos}
-            onToggleSelect={(id) => {
-              // Implementation needed
-            }}
-            onSelectAll={(ids) => {
-              // Implementation needed
-            }}
+            onToggleSelect={handleToggleSelect}
+            onSelectAll={handleSelectAll}
             onMarkAsWatched={() => {
-              // Implementation needed
+              const selectedIds = filteredVideos
+                .filter(v => v.selected)
+                .map(v => v.id);
+              removeFromHistory(selectedIds);
             }}
             isLoading={isLoading}
             showChannelNames={true}

@@ -144,19 +144,20 @@ export const useSubscriptions = () => {
   };
 
   // Add these new functions for video selection
-  const toggleSelect = (id: string) => {
-    setVideos(prevVideos => 
-      prevVideos.map(video => 
-        video.id === id ? { ...video, selected: !video.selected } : video
-      )
-    );
-  };
-
-  const handleSelectAll = (ids: string[]) => {
+  const toggleSelect = (videoIds: string[]) => {
     setVideos(prevVideos => 
       prevVideos.map(video => ({
         ...video,
-        selected: ids.includes(video.id)
+        selected: videoIds.includes(video.id) ? !video.selected : video.selected
+      }))
+    );
+  };
+
+  const handleSelectAll = (videoIds: string[]) => {
+    setVideos(prevVideos => 
+      prevVideos.map(video => ({
+        ...video,
+        selected: videoIds.length > 0 ? videoIds.includes(video.id) : false
       }))
     );
   };
