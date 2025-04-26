@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { useWatchHistory } from '../hooks/useWatchHistory';
+import Loader from './Loader';
 
 type SortOption = 'newest' | 'oldest' | 'title' | 'views';
 
@@ -110,7 +111,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+        <Loader size="lg" />
       </div>
     );
   }
@@ -241,7 +242,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       <div ref={loadMoreTriggerRef} className="h-10 w-full">
         {isLoadingMore && (
           <div className="flex justify-center items-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+            <Loader size="md" />
           </div>
         )}
       </div>

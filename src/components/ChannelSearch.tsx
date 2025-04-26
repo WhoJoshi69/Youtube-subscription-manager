@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { searchYouTubeChannel } from '../api/youtube';
 import { useSubscriptions } from '../hooks/useSubscriptions';
+import Loader from './Loader';
 
 interface ChannelSearchProps {
   onFetchPlaylist: (url: string) => Promise<void>;
@@ -72,7 +73,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
           >
             {searching ? (
               <>
-                <div className="h-5 w-5 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
+                <Loader size="sm" light />
                 <span>Searching...</span>
               </>
             ) : (
@@ -137,7 +138,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
                     >
                       {isLoading ? (
                         <>
-                          <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-gray-600 dark:border-gray-400 animate-spin"></div>
+                          <Loader size="sm" />
                           <span>Loading...</span>
                         </>
                       ) : (

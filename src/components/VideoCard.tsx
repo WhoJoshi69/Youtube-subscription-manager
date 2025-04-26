@@ -3,6 +3,7 @@ import { VideoCardProps } from '../types';
 import { Calendar, CheckSquare, Square, PlayCircle, Eye, CheckCircle } from 'lucide-react';
 import { formatPublishedDate } from '../utils/dateUtils';
 import { formatViewCount } from '../utils/formatters';
+import Loader from './Loader';
 
 const VideoCard: React.FC<VideoCardProps> = ({
   video,
@@ -82,7 +83,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
         {/* Loading placeholder */}
         {!isImageLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <Loader size="md" />
           </div>
         )}
 

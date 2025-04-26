@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PlaylistFetcherProps } from '../types';
 import { YoutubeIcon } from 'lucide-react';
 import ChannelSearch from './ChannelSearch';
+import Loader from './Loader';
 
 const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({ 
   onFetchPlaylist, 
@@ -85,7 +86,7 @@ const URLInput: React.FC<PlaylistFetcherProps> = ({
         >
           {isLoading ? (
             <>
-              <div className="h-5 w-5 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
+              <Loader size="sm" light />
               <span>Loading...</span>
             </>
           ) : (
