@@ -142,3 +142,69 @@ export const fetchVideoDetails = async (videoId: string): Promise<Video> => {
     throw error instanceof Error ? error : new Error('Failed to fetch video details');
   }
 };
+
+interface YouTubeChannel {
+  id: string;
+  title: string;
+  thumbnail: string;
+  subscriberCount: string;
+}
+
+function formatSubscriberCount(count: number): string {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`;
+  } else if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  return count.toString();
+}
+
+export const searchYouTubeChannel = async (query: string): Promise<YouTubeChannel[]> => {
+  if (!YOUTUBE_API_KEY) {
+    throw new Error("YouTube API key is not configured");
+  }
+
+  try {
+    // First, search for channels
+    const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
+    searchUrl.searchParams.append('part', 'snippet');
+    searchUrl.searchParams.append('type', 'channel');
+    searchUrl.searchParams.append('q', query);
+    searchUrl.searchParams.append('maxResults', '5');
+    searchUrl.searchParams.append('key', YOUTUBE_API_KEY);
+
+    const searchResponse = await fetch(searchUrl.toString());
+    const searchData = await searchResponse.json();
+
+    if (!searchResponse.ok) {
+      throw new Error(searchData.error?.message || 'Failed to search channels');
+    }
+
+    // Get channel IDs from search results
+    const channelIds = searchData.items.map((item: any) => item.snippet.channelId);
+
+    // Fetch detailed channel information
+    const channelsUrl = new URL('https://www.googleapis.com/youtube/v3/channels');
+    channelsUrl.searchParams.append('part', 'snippet,statistics');
+    channelsUrl.searchParams.append('id', channelIds.join(','));
+    channelsUrl.searchParams.append('key', YOUTUBE_API_KEY);
+
+    const channelsResponse = await fetch(channelsUrl.toString());
+    const channelsData = await channelsResponse.json();
+
+    if (!channelsResponse.ok) {
+      throw new Error(channelsData.error?.message || 'Failed to fetch channel details');
+    }
+
+    return channelsData.items.map((channel: any) => ({
+      id: channel.id,
+      title: channel.snippet.title,
+      thumbnail: channel.snippet.thumbnails.medium.url,
+      subscriberCount: formatSubscriberCount(parseInt(channel.statistics.subscriberCount))
+    }));
+
+  } catch (error) {
+    console.error('Error searching channels:', error);
+    throw error instanceof Error ? error : new Error('Failed to search channels');
+  }
+};

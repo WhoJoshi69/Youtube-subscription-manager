@@ -1,11 +1,71 @@
 import React, { useState } from 'react';
 import { PlaylistFetcherProps } from '../types';
-import { Search, YoutubeIcon } from 'lucide-react';
+import { YoutubeIcon } from 'lucide-react';
+import ChannelSearch from './ChannelSearch';
 
 const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({ 
   onFetchPlaylist, 
   isLoading,
   error
+}) => {
+  const [activeTab, setActiveTab] = useState<'url' | 'channel'>('channel');
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-col items-center mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <YoutubeIcon size={32} className="text-red-600" />
+          <h1 className="text-2xl font-bold">YouTube Playlist Viewer</h1>
+        </div>
+      </div>
+
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+          <button
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'channel'
+                ? 'text-red-600 border-b-2 border-red-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-red-600'
+            }`}
+            onClick={() => setActiveTab('channel')}
+          >
+            Search Channel
+          </button>
+          <button
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'url'
+                ? 'text-red-600 border-b-2 border-red-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-red-600'
+            }`}
+            onClick={() => setActiveTab('url')}
+          >
+            Playlist URL
+          </button>
+        </div>
+
+        {activeTab === 'channel' ? (
+          <ChannelSearch
+            onFetchPlaylist={onFetchPlaylist}
+            isLoading={isLoading}
+            error={error}
+          />
+        ) : (
+          <URLInput
+            onFetchPlaylist={onFetchPlaylist}
+            isLoading={isLoading}
+            error={error}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Separate URL input component
+const URLInput: React.FC<PlaylistFetcherProps> = ({ 
+  onFetchPlaylist, 
+  isLoading,
+  error 
 }) => {
   const [url, setUrl] = useState('');
 
@@ -15,56 +75,35 @@ const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <YoutubeIcon size={32} className="text-red-600" />
-          <h1 className="text-2xl font-bold">YouTube Playlist Viewer</h1>
-        </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 text-center max-w-2xl">
-          Enter a YouTube playlist URL to view all videos in a grid format. 
-          You can select videos with the checkbox and remove them from the grid.
-        </p>
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.youtube.com/playlist?list=..."
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800"
+          disabled={isLoading}
+        />
+        <button
+          type="submit"
+          disabled={isLoading || !url}
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <>
+              <div className="h-5 w-5 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
+              <span>Loading...</span>
+            </>
+          ) : (
+            <span>Load Playlist</span>
+          )}
+        </button>
       </div>
-
-      <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto mb-8">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.youtube.com/playlist?list=UUsBjURrPoezykLs9EqgamOA"
-              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800"
-              disabled={isLoading}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading || !url}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <div className="h-5 w-5 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
-                <span>Loading...</span>
-              </>
-            ) : (
-              <>
-                <Search size={18} />
-                <span>Fetch Playlist</span>
-              </>
-            )}
-          </button>
-        </div>
-        {error && (
-          <div className="mt-2 text-red-500 text-sm">{error}</div>
-        )}
-        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Example: https://www.youtube.com/playlist?list=UUsBjURrPoezykLs9EqgamOA
-        </div>
-      </form>
-    </div>
+      {error && (
+        <div className="mt-2 text-red-500 text-sm">{error}</div>
+      )}
+    </form>
   );
 };
 
