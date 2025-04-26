@@ -15,7 +15,10 @@ const Subscriptions: React.FC = () => {
     toggleChannelFilter,
     refreshVideos,
     hideAllChannels,
-    showAllChannels
+    showAllChannels,
+    toggleSelect,
+    handleSelectAll,
+    markAsWatched
   } = useSubscriptions();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -107,6 +110,9 @@ const Subscriptions: React.FC = () => {
           videos={videos}
           isLoading={isLoading}
           showChannelNames={true}
+          onToggleSelect={toggleSelect}
+          onSelectAll={handleSelectAll}
+          onMarkAsWatched={markAsWatched}
         />
       )}
     </div>

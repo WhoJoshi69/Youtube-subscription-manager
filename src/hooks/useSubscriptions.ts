@@ -134,6 +134,30 @@ export const useSubscriptions = () => {
     }
   };
 
+  // Add these new functions for video selection
+  const toggleSelect = (id: string) => {
+    setVideos(prevVideos => 
+      prevVideos.map(video => 
+        video.id === id ? { ...video, selected: !video.selected } : video
+      )
+    );
+  };
+
+  const handleSelectAll = (ids: string[]) => {
+    setVideos(prevVideos => 
+      prevVideos.map(video => ({
+        ...video,
+        selected: ids.includes(video.id)
+      }))
+    );
+  };
+
+  const markAsWatched = async () => {
+    const selectedVideos = videos.filter(video => video.selected);
+    // You can implement the watch marking logic here if needed
+    setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+  };
+
   return {
     subscribedChannels,
     filteredChannels,
@@ -145,6 +169,10 @@ export const useSubscriptions = () => {
     toggleChannelFilter,
     refreshVideos: fetchSubscriptionVideos,
     hideAllChannels,
-    showAllChannels
+    showAllChannels,
+    // Add these new functions to the return object
+    toggleSelect,
+    handleSelectAll,
+    markAsWatched
   };
 }; 
