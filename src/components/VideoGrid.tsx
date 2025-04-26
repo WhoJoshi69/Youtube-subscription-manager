@@ -8,7 +8,9 @@ import {
   SortDesc, 
   Calendar, 
   TrendingUp, 
-  Clock 
+  Clock,
+  Filter,
+  X
 } from 'lucide-react';
 
 type SortOption = 'newest' | 'oldest' | 'title' | 'views';
@@ -22,6 +24,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 }) => {
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const selectedCount = videos.filter(video => video.selected).length;
   const hasVideos = videos.length > 0;
 
@@ -57,6 +60,11 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     }
   }, [videos, sortBy]);
 
+  const handleSortChange = (option: SortOption) => {
+    setSortBy(option);
+    setShowSortMenu(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-40 py-16">
@@ -69,6 +77,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   if (!hasVideos) {
     return null;
   }
+
+  const sortOptions = [
+    { value: 'newest', label: 'Newest', icon: <Clock size={20} /> },
+    { value: 'oldest', label: 'Oldest', icon: <Calendar size={20} /> },
+    { value: 'title', label: 'Title', icon: <SortDesc size={20} /> },
+    { value: 'views', label: 'Most viewed', icon: <TrendingUp size={20} /> },
+  ] as const;
 
   return (
     <div className="w-full space-y-4">
@@ -91,50 +106,81 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           </button>
         </div>
 
-        {/* Sort Controls */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        {/* Sort Controls - Desktop */}
+        <div className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          {sortOptions.map(option => (
             <SortButton
-              isActive={sortBy === 'newest'}
-              onClick={() => setSortBy('newest')}
-              icon={<Clock size={16} />}
-              label="Newest"
+              key={option.value}
+              isActive={sortBy === option.value}
+              onClick={() => setSortBy(option.value)}
+              icon={option.icon}
+              label={option.label}
             />
-            <SortButton
-              isActive={sortBy === 'oldest'}
-              onClick={() => setSortBy('oldest')}
-              icon={<Calendar size={16} />}
-              label="Oldest"
-            />
-            <SortButton
-              isActive={sortBy === 'title'}
-              onClick={() => setSortBy('title')}
-              icon={<SortDesc size={16} />}
-              label="Title"
-            />
-            <SortButton
-              isActive={sortBy === 'views'}
-              onClick={() => setSortBy('views')}
-              icon={<TrendingUp size={16} />}
-              label="Views"
-            />
-          </div>
-
-          {selectedCount > 0 && (
-            <button
-              onClick={onMarkAsWatched}
-              disabled={selectedCount === 0}
-              className="px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors bg-green-600 hover:bg-green-700 text-white"
-            >
-              <CheckCircle size={16} />
-              Mark as Watched ({selectedCount})
-            </button>
-          )}
+          ))}
         </div>
+
+        {/* Sort Controls - Mobile */}
+        <div className="sm:hidden flex items-center gap-2">
+          <button
+            onClick={() => setShowSortMenu(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            <Filter size={16} />
+            <span>Sort by: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
+          </button>
+        </div>
+
+        {selectedCount > 0 && (
+          <button
+            onClick={onMarkAsWatched}
+            className="w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm bg-green-600 hover:bg-green-700 text-white"
+          >
+            <CheckCircle size={16} />
+            Mark as Watched ({selectedCount})
+          </button>
+        )}
       </div>
 
+      {/* Mobile Sort Menu */}
+      {showSortMenu && (
+        <div className="fixed inset-0 bg-black/50 z-50 sm:hidden" onClick={() => setShowSortMenu(false)}>
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-xl p-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Sort Videos</h3>
+              <button
+                onClick={() => setShowSortMenu(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {sortOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => handleSortChange(option.value)}
+                  className={`
+                    w-full flex items-center gap-3 p-3 rounded-lg text-left
+                    ${sortBy === option.value
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }
+                  `}
+                >
+                  {option.icon}
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {sortedVideos.map(video => (
           <VideoCard
             key={video.id}
@@ -147,7 +193,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   );
 };
 
-// Sort Button Component
+// Sort Button Component (Desktop)
 interface SortButtonProps {
   isActive: boolean;
   onClick: () => void;
@@ -165,7 +211,7 @@ const SortButton: React.FC<SortButtonProps> = ({
     onClick={onClick}
     className={`
       flex items-center gap-2 px-3 py-1.5 rounded-md text-sm
-      transition-colors whitespace-nowrap
+      transition-colors
       ${isActive 
         ? 'bg-white dark:bg-gray-700 shadow-sm text-red-600' 
         : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
@@ -174,7 +220,7 @@ const SortButton: React.FC<SortButtonProps> = ({
     title={`Sort by ${label}`}
   >
     {icon}
-    <span className="hidden sm:inline">{label}</span>
+    <span>{label}</span>
   </button>
 );
 
