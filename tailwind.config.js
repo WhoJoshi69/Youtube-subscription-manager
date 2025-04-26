@@ -33,6 +33,8 @@ module.exports = {
       animation: {
         'slide-in': 'slide-in 0.3s ease-out',
         'fade-in': 'fade-in 0.3s ease-in-out',
+        'vanish-puff': 'vanish-puff 300ms ease-out forwards',
+        'scale-fade': 'scale-fade 300ms ease-out forwards'
       },
       keyframes: {
         'slide-in': {
@@ -42,6 +44,26 @@ module.exports = {
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' }
+        },
+        'vanish-puff': {
+          '0%': {
+            transform: 'scale(1)',
+            opacity: '1'
+          },
+          '100%': {
+            transform: 'scale(1.2)',
+            opacity: '0'
+          }
+        },
+        'scale-fade': {
+          '0%': {
+            transform: 'scale(1)',
+            opacity: '1'
+          },
+          '100%': {
+            transform: 'scale(0.95)',
+            opacity: '0'
+          }
         }
       },
       borderRadius: {

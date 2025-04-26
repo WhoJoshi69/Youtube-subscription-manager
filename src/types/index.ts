@@ -31,6 +31,7 @@ export interface VideoCardProps {
   video: Video;
   onToggleSelect: (id: string) => void;
   showWatchedStatus?: boolean;
+  onVideoWatched?: (videoId: string) => void;
 }
 
 export interface Channel {

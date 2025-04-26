@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { VideoGridProps } from '../types';
 import VideoCard from './VideoCard';
 import { 
@@ -15,12 +15,12 @@ import {
 
 type SortOption = 'newest' | 'oldest' | 'title' | 'views';
 
-const VideoGrid: React.FC<VideoGridProps> = ({ 
-  videos, 
-  onToggleSelect, 
-  onSelectAll,
+const VideoGrid: React.FC<VideoGridProps> = ({
+  videos,
+  onToggleSelect,
   onMarkAsWatched,
   isLoading,
+  showChannelNames = false
 }) => {
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -32,8 +32,12 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     const newSelectedState = !isAllSelected;
     setIsAllSelected(newSelectedState);
     const videoIds = videos.map(video => video.id);
-    onSelectAll(newSelectedState ? videoIds : []);
+    onToggleSelect(newSelectedState ? videoIds : []);
   };
+
+  const handleVideoWatched = useCallback((videoId: string) => {
+    onToggleSelect([videoId]);
+  }, [onToggleSelect]);
 
   // Sort videos based on selected option
   const sortedVideos = useMemo(() => {
@@ -67,15 +71,18 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-40 py-16">
-        <div className="h-10 w-10 rounded-full border-4 border-t-transparent border-red-600 animate-spin mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-400">Loading videos...</p>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
       </div>
     );
   }
 
   if (!hasVideos) {
-    return null;
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 dark:text-gray-400">No videos found</p>
+      </div>
+    );
   }
 
   const sortOptions = [
@@ -180,12 +187,14 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       )}
 
       {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {sortedVideos.map(video => (
           <VideoCard
             key={video.id}
             video={video}
             onToggleSelect={onToggleSelect}
+            onMarkAsWatched={onMarkAsWatched}
+            showWatchedStatus={true}
           />
         ))}
       </div>

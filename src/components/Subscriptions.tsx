@@ -23,6 +23,13 @@ const Subscriptions: React.FC = () => {
 
   const [showFilters, setShowFilters] = useState(false);
 
+  const handleVideoWatched = async (videoId: string) => {
+    // Remove the watched video from the list
+    await markAsWatched();
+    // Optionally refresh the videos list
+    refreshVideos();
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
@@ -112,7 +119,7 @@ const Subscriptions: React.FC = () => {
           showChannelNames={true}
           onToggleSelect={toggleSelect}
           onSelectAll={handleSelectAll}
-          onMarkAsWatched={markAsWatched}
+          onMarkAsWatched={handleVideoWatched}
         />
       )}
     </div>

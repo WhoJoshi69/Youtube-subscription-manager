@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Video } from '../types';
 import {
   getWatchHistory,
@@ -11,7 +11,7 @@ export const useWatchHistory = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -23,20 +23,22 @@ export const useWatchHistory = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Load watch history on mount
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [loadHistory]);
 
   const markAsWatched = async (video: Video) => {
     try {
-      await addToWatchHistory(video);
-      setWatchedVideos(prev => [video, ...prev]);
+      await addToWatchHistory({ ...video, selected: false, watched: true });
+      setWatchedVideos(prev => [{ ...video, watched: true }, ...prev]);
+      return true; // Return success status
     } catch (err) {
       console.error('Error marking video as watched:', err);
       setError('Failed to mark video as watched');
+      return false;
     }
   };
 
