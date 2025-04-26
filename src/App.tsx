@@ -91,36 +91,45 @@ function App() {
         </header>
 
         <main className="flex flex-col items-center space-y-8">
-          <div className="w-full flex justify-center gap-3">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveSection('playlist')}
+                className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                  activeSection === 'playlist'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => setActiveSection('subscriptions')}
+                className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                  activeSection === 'subscriptions'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Subscriptions
+              </button>
+              <button
+                onClick={() => setActiveSection('history')}
+                className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                  activeSection === 'history'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                History
+              </button>
+            </div>
             <button
-              onClick={() => setActiveSection('playlist')}
-              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
-                activeSection === 'playlist'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
-              }`}
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              Playlist Viewer
-            </button>
-            <button
-              onClick={() => setActiveSection('subscriptions')}
-              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
-                activeSection === 'subscriptions'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              Subscriptions
-            </button>
-            <button
-              onClick={() => setActiveSection('history')}
-              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
-                activeSection === 'history'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              History
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
           </div>
 

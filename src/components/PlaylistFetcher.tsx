@@ -12,13 +12,6 @@ const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({
 
   return (
     <div className="w-full">
-      <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <YoutubeIcon size={32} className="text-red-600" />
-          <h1 className="text-2xl font-bold">YouTube Playlist Viewer</h1>
-        </div>
-      </div>
-
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
           <button
