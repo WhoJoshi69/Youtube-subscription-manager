@@ -130,9 +130,19 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
                     </button>
                     <button
                       onClick={() => handleChannelSelect(channel.id)}
-                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                      disabled={isLoading}
+                      className={`px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center gap-2 ${
+                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                     >
-                      View Videos
+                      {isLoading ? (
+                        <>
+                          <div className="h-4 w-4 rounded-full border-2 border-t-transparent border-gray-600 dark:border-gray-400 animate-spin"></div>
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        'View Videos'
+                      )}
                     </button>
                   </div>
                 </div>
