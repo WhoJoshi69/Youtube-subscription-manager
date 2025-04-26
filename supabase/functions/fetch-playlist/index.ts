@@ -59,7 +59,8 @@ async function getAllVideos(initialData: any): Promise<Video[]> {
         title: video.title.runs[0].text,
         thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
         channelTitle: video.shortBylineText.runs[0].text,
-        publishedAt: video.publishedTimeText?.simpleText || 'Unknown date'
+        publishedAt: video.publishedTimeText?.simpleText || 
+                     (video.publishedAt ? new Date(video.publishedAt).toISOString() : 'Unknown date')
       });
     }
   });
@@ -83,7 +84,8 @@ async function getAllVideos(initialData: any): Promise<Video[]> {
           title: video.title.runs[0].text,
           thumbnail: `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`,
           channelTitle: video.shortBylineText.runs[0].text,
-          publishedAt: video.publishedTimeText?.simpleText || 'Unknown date'
+          publishedAt: video.publishedTimeText?.simpleText || 
+                       (video.publishedAt ? new Date(video.publishedAt).toISOString() : 'Unknown date')
         });
       }
     });

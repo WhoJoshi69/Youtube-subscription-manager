@@ -40,12 +40,15 @@ export const usePlaylist = () => {
 
     try {
       const fetchedVideos = await fetchPlaylistVideos(url);
+      
       // Filter out already watched videos
       const unwatchedVideos = fetchedVideos.filter(
         video => !watchedVideos.some(watched => watched.id === video.id)
       );
+      
       setVideos(unwatchedVideos);
     } catch (err) {
+      console.error('Error fetching playlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch playlist videos');
     } finally {
       setIsLoading(false);
