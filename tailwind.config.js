@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
@@ -21,7 +21,14 @@ export default {
         gray: {
           800: '#1a1a1a', // Darker gray for dark mode
           900: '#0f0f0f', // Even darker
-        }
+        },
+        container: {
+          center: true,
+          padding: {
+            DEFAULT: '1rem',
+            sm: '2rem',
+          },
+        },
       },
       animation: {
         'slide-in': 'slide-in 0.3s ease-out',
