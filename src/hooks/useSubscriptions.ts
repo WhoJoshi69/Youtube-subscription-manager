@@ -6,7 +6,9 @@ import {
   addSubscription,
   removeSubscription,
   getFilteredChannels,
-  updateFilteredChannels
+  updateFilteredChannels,
+  addToWatchHistory,
+  getWatchHistory
 } from '../lib/db';
 
 export const useSubscriptions = () => {
@@ -82,25 +84,35 @@ export const useSubscriptions = () => {
     setError(null);
 
     try {
-      const allVideos: Video[] = [];
-      
-      const activeChannels = subscribedChannels.filter(
-        channel => !filteredChannels.includes(channel.id)
+      const [allVideos, watchHistory] = await Promise.all([
+        (async () => {
+          const videos: Video[] = [];
+          const activeChannels = subscribedChannels.filter(
+            channel => !filteredChannels.includes(channel.id)
+          );
+
+          for (const channel of activeChannels) {
+            try {
+              const channelVideos = await fetchChannelUploads(channel.id);
+              videos.push(...channelVideos.map(video => ({
+                ...video,
+                channelId: channel.id
+              })));
+            } catch (err) {
+              console.error(`Error fetching videos for channel ${channel.title}:`, err);
+            }
+          }
+          return videos;
+        })(),
+        getWatchHistory()
+      ]);
+
+      // Filter out already watched videos
+      const unwatchedVideos = allVideos.filter(
+        video => !watchHistory.some(watched => watched.id === video.id)
       );
 
-      for (const channel of activeChannels) {
-        try {
-          const channelVideos = await fetchChannelUploads(channel.id);
-          allVideos.push(...channelVideos.map(video => ({
-            ...video,
-            channelId: channel.id
-          })));
-        } catch (err) {
-          console.error(`Error fetching videos for channel ${channel.title}:`, err);
-        }
-      }
-
-      const sortedVideos = allVideos.sort((a, b) => 
+      const sortedVideos = unwatchedVideos.sort((a, b) => 
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
 
@@ -154,8 +166,19 @@ export const useSubscriptions = () => {
 
   const markAsWatched = async () => {
     const selectedVideos = videos.filter(video => video.selected);
-    // You can implement the watch marking logic here if needed
-    setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+    
+    try {
+      // Add each selected video to watch history in Supabase
+      for (const video of selectedVideos) {
+        await addToWatchHistory({ ...video, selected: false, watched: true });
+      }
+      
+      // Remove watched videos from the list
+      setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+    } catch (err) {
+      console.error('Error marking videos as watched:', err);
+      setError('Failed to mark videos as watched');
+    }
   };
 
   return {
