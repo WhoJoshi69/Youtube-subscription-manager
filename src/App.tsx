@@ -18,8 +18,11 @@ function App() {
     videos,
     watchedVideos,
     isLoading,
+    isLoadingMore,
+    hasMoreVideos,
     error,
     fetchPlaylist,
+    loadMoreVideos,
     toggleSelect,
     handleSelectAll,
     markAsWatched,
@@ -121,7 +124,7 @@ function App() {
           {activeSection === 'playlist' ? (
             <>
               <PlaylistFetcher
-                onFetchPlaylist={fetchPlaylist}
+                onFetchPlaylist={(url) => fetchPlaylist(url, true)}
                 isLoading={isLoading}
                 error={error}
               />
@@ -131,6 +134,9 @@ function App() {
                 onSelectAll={handleSelectAll}
                 onMarkAsWatched={markAsWatched}
                 isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasMoreVideos={hasMoreVideos}
+                onLoadMore={loadMoreVideos}
               />
             </>
           ) : activeSection === 'subscriptions' ? (

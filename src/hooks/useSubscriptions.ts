@@ -17,25 +17,124 @@ export const useSubscriptions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filteredChannels, setFilteredChannels] = useState<string[]>([]);
+  
+  // Add new states for pagination
+  const [pageTokens, setPageTokens] = useState<Record<string, string | null>>({});
+  const [hasMoreVideos, setHasMoreVideos] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Load subscriptions and filtered channels on mount
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoading(true);
         const [subs, filtered] = await Promise.all([
           getSubscriptions(),
           getFilteredChannels()
         ]);
-        setSubscribedChannels(subs);
-        setFilteredChannels(filtered);
+        setSubscribedChannels(subs || []);
+        setFilteredChannels(filtered || []);
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Failed to load subscriptions');
+        setSubscribedChannels([]);
+        setFilteredChannels([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadData();
   }, []);
+
+  const fetchSubscriptionVideos = async (isInitialLoad: boolean = true) => {
+    if (subscribedChannels.length === 0) {
+      setVideos([]);
+      setHasMoreVideos(false);
+      return;
+    }
+
+    if (isInitialLoad) {
+      setIsLoading(true);
+      setError(null);
+      setPageTokens({});
+    } else {
+      setIsLoadingMore(true);
+    }
+
+    try {
+      const activeChannels = subscribedChannels.filter(
+        channel => !filteredChannels.includes(channel.id)
+      );
+
+      const newVideos: Video[] = [];
+      const newPageTokens: Record<string, string | null> = { ...pageTokens };
+      let hasErrors = false;
+
+      for (const channel of activeChannels) {
+        try {
+          // Skip if we've already loaded all videos for this channel
+          if (!isInitialLoad && newPageTokens[channel.id] === null) {
+            continue;
+          }
+
+          const result = await fetchChannelUploads(
+            channel.id,
+            isInitialLoad ? undefined : newPageTokens[channel.id]
+          );
+
+          newVideos.push(...result.videos);
+          newPageTokens[channel.id] = result.nextPageToken || null;
+        } catch (err) {
+          console.error(`Error fetching videos for channel ${channel.title}:`, err);
+          hasErrors = true;
+        }
+      }
+
+      if (hasErrors && newVideos.length === 0) {
+        throw new Error('Failed to fetch videos from any channel');
+      }
+
+      // Filter out watched videos
+      const unwatchedVideos = newVideos.filter(
+        video => !isVideoWatched(video.id)
+      );
+
+      // Sort by date
+      const sortedVideos = unwatchedVideos.sort((a, b) => 
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      );
+
+      // Update videos state
+      setVideos(prev => 
+        isInitialLoad ? sortedVideos : [...prev, ...sortedVideos]
+      );
+      
+      // Update page tokens
+      setPageTokens(newPageTokens);
+      
+      // Check if we have more videos to load
+      setHasMoreVideos(Object.values(newPageTokens).some(token => token !== null));
+    } catch (err) {
+      setError('Failed to fetch subscription videos');
+      if (isInitialLoad) {
+        setVideos([]);
+      }
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  // Function to load more videos
+  const loadMoreVideos = () => {
+    if (!isLoadingMore && hasMoreVideos) {
+      fetchSubscriptionVideos(false);
+    }
+  };
 
   const subscribeToChannel = async (channel: Channel) => {
     try {
@@ -74,57 +173,6 @@ export const useSubscriptions = () => {
     }
   };
 
-  const fetchSubscriptionVideos = async () => {
-    if (subscribedChannels.length === 0) {
-      setVideos([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const allVideos = await (async () => {
-        const videos: Video[] = [];
-        const activeChannels = subscribedChannels.filter(
-          channel => !filteredChannels.includes(channel.id)
-        );
-
-        for (const channel of activeChannels) {
-          try {
-            const channelVideos = await fetchChannelUploads(channel.id);
-            videos.push(...channelVideos.map(video => ({
-              ...video,
-              channelId: channel.id
-            })));
-          } catch (err) {
-            console.error(`Error fetching videos for channel ${channel.title}:`, err);
-          }
-        }
-        return videos;
-      })();
-
-      // Filter out already watched videos using local storage
-      const unwatchedVideos = allVideos.filter(
-        video => !isVideoWatched(video.id)
-      );
-
-      const sortedVideos = unwatchedVideos.sort((a, b) => 
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-      );
-
-      setVideos(sortedVideos);
-    } catch (err) {
-      setError('Failed to fetch subscription videos');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSubscriptionVideos();
-  }, [subscribedChannels, filteredChannels]);
-
   const hideAllChannels = async () => {
     try {
       await updateFilteredChannels(subscribedChannels.map(channel => channel.id));
@@ -143,7 +191,6 @@ export const useSubscriptions = () => {
     }
   };
 
-  // Add these new functions for video selection
   const toggleSelect = (videoIds: string[]) => {
     setVideos(prevVideos => 
       prevVideos.map(video => ({
@@ -166,13 +213,11 @@ export const useSubscriptions = () => {
     const selectedVideos = videos.filter(video => video.selected);
     
     try {
-      // Add each selected video to watch history in Supabase and local storage
       for (const video of selectedVideos) {
         await addToWatchHistory({ ...video, selected: false, watched: true });
         addToLocalWatchHistory({ ...video, watched: true });
       }
       
-      // Remove watched videos from the list
       setVideos(prevVideos => prevVideos.filter(video => !video.selected));
     } catch (err) {
       console.error('Error marking videos as watched:', err);
@@ -185,14 +230,16 @@ export const useSubscriptions = () => {
     filteredChannels,
     videos,
     isLoading,
+    isLoadingMore,
+    hasMoreVideos,
     error,
     subscribeToChannel,
     unsubscribeFromChannel,
     toggleChannelFilter,
-    refreshVideos: fetchSubscriptionVideos,
+    refreshVideos: () => fetchSubscriptionVideos(true),
+    loadMoreVideos,
     hideAllChannels,
     showAllChannels,
-    // Add these new functions to the return object
     toggleSelect,
     handleSelectAll,
     markAsWatched

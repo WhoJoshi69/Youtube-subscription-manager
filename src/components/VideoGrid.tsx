@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { VideoGridProps } from '../types';
 import VideoCard from './VideoCard';
 import { 
@@ -22,6 +22,9 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   onSelectAll,
   onMarkAsWatched,
   isLoading,
+  isLoadingMore,
+  hasMoreVideos,
+  onLoadMore,
   showChannelNames = false
 }) => {
   const [isAllSelected, setIsAllSelected] = useState(false);
@@ -30,6 +33,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const selectedCount = videos.filter(video => video.selected).length;
   const hasVideos = videos.length > 0;
   const { watchedVideos } = useWatchHistory();
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   // Create a Set of watched video IDs for O(1) lookup
   const watchedVideoIds = new Set(watchedVideos.map(v => v.id));
@@ -74,6 +79,33 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     setSortBy(option);
     setShowSortMenu(false);
   };
+
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const target = entries[0];
+    if (target.isIntersecting && !isLoading && !isLoadingMore && hasMoreVideos) {
+      onLoadMore?.();
+    }
+  }, [isLoading, isLoadingMore, hasMoreVideos, onLoadMore]);
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1
+    };
+
+    observerRef.current = new IntersectionObserver(handleObserver, options);
+
+    if (loadMoreTriggerRef.current) {
+      observerRef.current.observe(loadMoreTriggerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [handleObserver]);
 
   if (isLoading) {
     return (
@@ -204,6 +236,22 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           />
         ))}
       </div>
+
+      {/* Loading trigger element */}
+      <div ref={loadMoreTriggerRef} className="h-10 w-full">
+        {isLoadingMore && (
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+          </div>
+        )}
+      </div>
+
+      {/* No more videos message */}
+      {!hasMoreVideos && videos.length > 0 && (
+        <div className="text-center py-4 text-gray-500">
+          No more videos to load
+        </div>
+      )}
     </div>
   );
 };

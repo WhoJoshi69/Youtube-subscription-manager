@@ -32,7 +32,11 @@ interface YouTubeApiResponse {
   nextPageToken?: string;
 }
 
-export const fetchPlaylistVideos = async (url: string): Promise<Video[]> => {
+export const fetchPlaylistVideos = async (
+  url: string,
+  pageToken?: string,
+  maxResults: number = 12
+): Promise<{ videos: Video[]; nextPageToken?: string }> => {
   const playlistId = extractPlaylistId(url);
   
   if (!playlistId) {
@@ -44,62 +48,41 @@ export const fetchPlaylistVideos = async (url: string): Promise<Video[]> => {
   }
 
   try {
-    // Try to get from localStorage first
-    const cached = localStorage.getItem(`playlist_${playlistId}`);
-    if (cached) {
-      return JSON.parse(cached);
+    // Construct the API URL with pagination
+    const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    apiUrl.searchParams.append('part', 'snippet');
+    apiUrl.searchParams.append('maxResults', maxResults.toString());
+    apiUrl.searchParams.append('playlistId', playlistId);
+    apiUrl.searchParams.append('key', YOUTUBE_API_KEY);
+    
+    if (pageToken) {
+      apiUrl.searchParams.append('pageToken', pageToken);
     }
 
-    const videos: Video[] = [];
-    let nextPageToken: string | undefined = undefined;
-
-    do {
-      // Construct the API URL with pagination
-      const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-      apiUrl.searchParams.append('part', 'snippet');
-      apiUrl.searchParams.append('maxResults', '50');
-      apiUrl.searchParams.append('playlistId', playlistId);
-      apiUrl.searchParams.append('key', YOUTUBE_API_KEY);
-      
-      if (nextPageToken) {
-        apiUrl.searchParams.append('pageToken', nextPageToken);
-      }
-
-      console.log('Fetching from URL:', apiUrl.toString());
-
-      const response = await fetch(apiUrl.toString());
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch playlist videos');
-      }
-
-      // Process the videos
-      const newVideos = data.items.map((item: any) => ({
-        id: item.snippet.resourceId.videoId,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.maxres?.url || 
-                  item.snippet.thumbnails.standard?.url || 
-                  item.snippet.thumbnails.high?.url || 
-                  item.snippet.thumbnails.medium?.url,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        selected: false,
-        url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`
-      }));
-
-      videos.push(...newVideos);
-
-      // Update the nextPageToken for the next iteration
-      nextPageToken = data.nextPageToken;
-
-    } while (nextPageToken);
-
-    // Store in localStorage
-    localStorage.setItem(`playlist_${playlistId}`, JSON.stringify(videos));
+    const response = await fetch(apiUrl.toString());
+    const data = await response.json();
     
-    return videos;
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to fetch playlist videos');
+    }
 
+    const videos = data.items.map((item: any) => ({
+      id: item.snippet.resourceId.videoId,
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.maxres?.url || 
+                item.snippet.thumbnails.standard?.url || 
+                item.snippet.thumbnails.high?.url || 
+                item.snippet.thumbnails.medium.url,
+      channelTitle: item.snippet.channelTitle,
+      publishedAt: item.snippet.publishedAt,
+      selected: false,
+      url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`
+    }));
+
+    return {
+      videos,
+      nextPageToken: data.nextPageToken
+    };
   } catch (error) {
     console.error('Error fetching playlist:', error);
     throw error instanceof Error ? error : new Error('Failed to fetch playlist videos');
@@ -213,7 +196,11 @@ export const searchYouTubeChannel = async (query: string) => {
   }
 };
 
-export const fetchChannelUploads = async (channelId: string): Promise<Video[]> => {
+export const fetchChannelUploads = async (
+  channelId: string,
+  pageToken?: string,
+  maxResults: number = 12
+): Promise<{ videos: Video[]; nextPageToken?: string }> => {
   if (!YOUTUBE_API_KEY) {
     throw new Error("YouTube API key is not configured");
   }
@@ -222,12 +209,42 @@ export const fetchChannelUploads = async (channelId: string): Promise<Video[]> =
     // Convert channel ID to uploads playlist ID
     const uploadsPlaylistId = channelId.replace('UC', 'UU');
     
-    // Use the existing fetchPlaylistVideos function
-    const videos = await fetchPlaylistVideos(
-      `https://www.youtube.com/playlist?list=${uploadsPlaylistId}`
-    );
+    // Construct the API URL with pagination
+    const apiUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    apiUrl.searchParams.append('part', 'snippet');
+    apiUrl.searchParams.append('maxResults', maxResults.toString());
+    apiUrl.searchParams.append('playlistId', uploadsPlaylistId);
+    apiUrl.searchParams.append('key', YOUTUBE_API_KEY);
     
-    return videos;
+    if (pageToken) {
+      apiUrl.searchParams.append('pageToken', pageToken);
+    }
+
+    const response = await fetch(apiUrl.toString());
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch channel uploads');
+    }
+
+    const data = await response.json();
+    
+    const videos = data.items.map((item: any) => ({
+      id: item.snippet.resourceId.videoId,
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.standard?.url || 
+                item.snippet.thumbnails.high?.url || 
+                item.snippet.thumbnails.medium.url,
+      channelTitle: item.snippet.channelTitle,
+      publishedAt: item.snippet.publishedAt,
+      selected: false,
+      channelId: channelId,
+      url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`
+    }));
+
+    return {
+      videos,
+      nextPageToken: data.nextPageToken
+    };
   } catch (error) {
     console.error('Error fetching channel uploads:', error);
     throw error;

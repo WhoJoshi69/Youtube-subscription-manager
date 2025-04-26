@@ -7,31 +7,58 @@ import { isVideoWatched, addToLocalWatchHistory } from '../utils/watchHistorySto
 export const usePlaylist = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
+  const [hasMoreVideos, setHasMoreVideos] = useState(true);
+  const [currentPlaylistUrl, setCurrentPlaylistUrl] = useState<string | null>(null);
 
-  const fetchPlaylist = async (url: string) => {
+  const fetchPlaylist = async (url: string, isInitialLoad: boolean = true) => {
     if (!url) {
       setError('Please enter a YouTube playlist URL');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (isInitialLoad) {
+      setIsLoading(true);
+      setError(null);
+      setVideos([]);
+      setNextPageToken(undefined);
+      setHasMoreVideos(true);
+      setCurrentPlaylistUrl(url);
+    } else {
+      setIsLoadingMore(true);
+    }
 
     try {
-      const fetchedVideos = await fetchPlaylistVideos(url);
+      const result = await fetchPlaylistVideos(
+        url,
+        isInitialLoad ? undefined : nextPageToken
+      );
       
-      // Filter out already watched videos using local storage
-      const unwatchedVideos = fetchedVideos.filter(
+      // Filter out already watched videos
+      const unwatchedVideos = result.videos.filter(
         video => !isVideoWatched(video.id)
       );
       
-      setVideos(unwatchedVideos);
+      setVideos(prev => isInitialLoad ? unwatchedVideos : [...prev, ...unwatchedVideos]);
+      setNextPageToken(result.nextPageToken);
+      setHasMoreVideos(!!result.nextPageToken);
     } catch (err) {
       console.error('Error fetching playlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch playlist videos');
     } finally {
-      setIsLoading(false);
+      if (isInitialLoad) {
+        setIsLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  const loadMoreVideos = () => {
+    if (!isLoadingMore && hasMoreVideos && currentPlaylistUrl) {
+      fetchPlaylist(currentPlaylistUrl, false);
     }
   };
 
@@ -75,8 +102,11 @@ export const usePlaylist = () => {
   return {
     videos,
     isLoading,
+    isLoadingMore,
+    hasMoreVideos,
     error,
     fetchPlaylist,
+    loadMoreVideos,
     toggleSelect,
     handleSelectAll,
     markAsWatched

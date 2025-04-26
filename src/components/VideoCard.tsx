@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { VideoCardProps } from '../types';
 import { Calendar, CheckSquare, Square, PlayCircle, Eye, CheckCircle } from 'lucide-react';
 import { formatPublishedDate } from '../utils/dateUtils';
@@ -13,6 +13,35 @@ const VideoCard: React.FC<VideoCardProps> = ({
 }) => {
   const [isVanishing, setIsVanishing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldLoad(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        rootMargin: '50px', // Start loading images 50px before they enter viewport
+      }
+    );
+
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    return () => {
+      if (imageRef.current) {
+        observer.unobserve(imageRef.current);
+      }
+    };
+  }, []);
 
   const handleThumbnailClick = () => {
     const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
@@ -38,13 +67,25 @@ const VideoCard: React.FC<VideoCardProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Thumbnail container */}
-      <div className="relative aspect-video">
+      <div className="relative aspect-video bg-gray-200 dark:bg-gray-700">
         <img
-          src={video.thumbnail}
+          ref={imageRef}
+          src={shouldLoad ? video.thumbnail : ''}
           alt={video.title}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            isImageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoad={() => setIsImageLoaded(true)}
+          loading="lazy"
         />
         
+        {/* Loading placeholder */}
+        {!isImageLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
         {/* Selection checkbox */}
         <div 
           className={`absolute top-2 left-2 z-10 transition-all duration-200

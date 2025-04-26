@@ -10,10 +10,13 @@ const Subscriptions: React.FC = () => {
     filteredChannels,
     videos,
     isLoading,
+    isLoadingMore,
+    hasMoreVideos,
     error,
     unsubscribeFromChannel,
     toggleChannelFilter,
     refreshVideos,
+    loadMoreVideos,
     hideAllChannels,
     showAllChannels,
     toggleSelect,
@@ -116,6 +119,9 @@ const Subscriptions: React.FC = () => {
         <VideoGrid
           videos={videos}
           isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMoreVideos={hasMoreVideos}
+          onLoadMore={loadMoreVideos}
           showChannelNames={true}
           onToggleSelect={toggleSelect}
           onSelectAll={handleSelectAll}
