@@ -45,7 +45,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
           className="w-full h-full object-cover"
         />
         
-        {/* Selection checkbox with improved design */}
+        {/* Selection checkbox */}
         <div 
           className={`absolute top-2 left-2 z-10 transition-all duration-200
                       ${isHovered || video.selected ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
@@ -69,6 +69,20 @@ const VideoCard: React.FC<VideoCardProps> = ({
             )}
           </button>
         </div>
+
+        {/* Play button in center */}
+        <button
+          onClick={handleThumbnailClick}
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                     w-12 h-12 flex items-center justify-center rounded-full
+                     bg-black/50 hover:bg-red-600 text-white
+                     transition-all duration-200 backdrop-blur-sm
+                     ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}
+                     z-10`}
+          title="Play video"
+        >
+          <PlayCircle size={28} className="transform translate-x-[1px]" />
+        </button>
 
         {/* Watch button overlay */}
         <button
@@ -99,6 +113,12 @@ const VideoCard: React.FC<VideoCardProps> = ({
           <div className="absolute inset-0 bg-red-500/20 backdrop-blur-sm
                          animate-vanish-puff z-30" />
         )}
+
+        {/* Dark overlay on hover */}
+        <div 
+          className={`absolute inset-0 bg-black/20 transition-opacity duration-200
+                      ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+        />
       </div>
 
       {/* Video info */}
