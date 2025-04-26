@@ -6,6 +6,8 @@ import { usePlaylist } from './hooks/usePlaylist';
 import { Moon, Sun, Youtube } from 'lucide-react';
 import Subscriptions from './components/Subscriptions';
 import History from './components/History';
+import { supabase } from './lib/supabase';
+import { Auth } from './components/Auth';
 
 function App() {
   const {
@@ -22,6 +24,7 @@ function App() {
 
   const [darkMode, setDarkMode] = useState(true);
   const [activeSection, setActiveSection] = useState<'playlist' | 'subscriptions' | 'history'>('playlist');
+  const [session, setSession] = useState(null);
 
   // Check for preferred color scheme
   useEffect(() => {
@@ -46,6 +49,24 @@ function App() {
   const handleRemoveFromHistory = (videoIds: string[]) => {
     setWatchedVideos(prev => prev.filter(video => !videoIds.includes(video.id)));
   };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!session) {
+    return <Auth />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white">

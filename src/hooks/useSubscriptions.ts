@@ -1,43 +1,75 @@
 import { useState, useEffect } from 'react';
 import { Channel, Video } from '../types';
 import { fetchChannelUploads } from '../api/youtube';
+import {
+  getSubscriptions,
+  addSubscription,
+  removeSubscription,
+  getFilteredChannels,
+  updateFilteredChannels
+} from '../lib/db';
 
 export const useSubscriptions = () => {
-  const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>(() => {
-    const saved = localStorage.getItem('subscribed_channels');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filteredChannels, setFilteredChannels] = useState<string[]>([]);
 
-  // Save subscribed channels to localStorage
+  // Load subscriptions and filtered channels on mount
   useEffect(() => {
-    localStorage.setItem('subscribed_channels', JSON.stringify(subscribedChannels));
-  }, [subscribedChannels]);
-
-  const subscribeToChannel = (channel: Channel) => {
-    setSubscribedChannels(prev => {
-      if (prev.some(c => c.id === channel.id)) {
-        return prev;
+    const loadData = async () => {
+      try {
+        const [subs, filtered] = await Promise.all([
+          getSubscriptions(),
+          getFilteredChannels()
+        ]);
+        setSubscribedChannels(subs);
+        setFilteredChannels(filtered);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load subscriptions');
       }
-      return [...prev, { ...channel, isSubscribed: true }];
-    });
+    };
+
+    loadData();
+  }, []);
+
+  const subscribeToChannel = async (channel: Channel) => {
+    try {
+      await addSubscription(channel);
+      setSubscribedChannels(prev => {
+        if (prev.some(c => c.id === channel.id)) {
+          return prev;
+        }
+        return [...prev, { ...channel, isSubscribed: true }];
+      });
+    } catch (err) {
+      setError('Failed to subscribe to channel');
+    }
   };
 
-  const unsubscribeFromChannel = (channelId: string) => {
-    setSubscribedChannels(prev => prev.filter(c => c.id !== channelId));
-    setFilteredChannels(prev => prev.filter(id => id !== channelId));
+  const unsubscribeFromChannel = async (channelId: string) => {
+    try {
+      await removeSubscription(channelId);
+      setSubscribedChannels(prev => prev.filter(c => c.id !== channelId));
+      setFilteredChannels(prev => prev.filter(id => id !== channelId));
+    } catch (err) {
+      setError('Failed to unsubscribe from channel');
+    }
   };
 
-  const toggleChannelFilter = (channelId: string) => {
-    setFilteredChannels(prev => 
-      prev.includes(channelId)
-        ? prev.filter(id => id !== channelId)
-        : [...prev, channelId]
-    );
+  const toggleChannelFilter = async (channelId: string) => {
+    const newFilters = filteredChannels.includes(channelId)
+      ? filteredChannels.filter(id => id !== channelId)
+      : [...filteredChannels, channelId];
+    
+    try {
+      await updateFilteredChannels(newFilters);
+      setFilteredChannels(newFilters);
+    } catch (err) {
+      setError('Failed to update channel filters');
+    }
   };
 
   const fetchSubscriptionVideos = async () => {
@@ -52,7 +84,6 @@ export const useSubscriptions = () => {
     try {
       const allVideos: Video[] = [];
       
-      // Fetch videos from each subscribed channel that isn't filtered out
       const activeChannels = subscribedChannels.filter(
         channel => !filteredChannels.includes(channel.id)
       );
@@ -62,27 +93,25 @@ export const useSubscriptions = () => {
           const channelVideos = await fetchChannelUploads(channel.id);
           allVideos.push(...channelVideos.map(video => ({
             ...video,
-            channelId: channel.id // Add channelId to track video source
+            channelId: channel.id
           })));
         } catch (err) {
           console.error(`Error fetching videos for channel ${channel.title}:`, err);
         }
       }
 
-      // Sort videos by date
       const sortedVideos = allVideos.sort((a, b) => 
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
 
       setVideos(sortedVideos);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch subscription videos');
+      setError('Failed to fetch subscription videos');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch videos whenever subscriptions or filters change
   useEffect(() => {
     fetchSubscriptionVideos();
   }, [subscribedChannels, filteredChannels]);
