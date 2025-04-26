@@ -7,9 +7,9 @@ import {
   removeSubscription,
   getFilteredChannels,
   updateFilteredChannels,
-  addToWatchHistory,
-  getWatchHistory
+  addToWatchHistory
 } from '../lib/db';
+import { isVideoWatched, addToLocalWatchHistory } from '../utils/watchHistoryStorage';
 
 export const useSubscriptions = () => {
   const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>([]);
@@ -84,32 +84,29 @@ export const useSubscriptions = () => {
     setError(null);
 
     try {
-      const [allVideos, watchHistory] = await Promise.all([
-        (async () => {
-          const videos: Video[] = [];
-          const activeChannels = subscribedChannels.filter(
-            channel => !filteredChannels.includes(channel.id)
-          );
+      const allVideos = await (async () => {
+        const videos: Video[] = [];
+        const activeChannels = subscribedChannels.filter(
+          channel => !filteredChannels.includes(channel.id)
+        );
 
-          for (const channel of activeChannels) {
-            try {
-              const channelVideos = await fetchChannelUploads(channel.id);
-              videos.push(...channelVideos.map(video => ({
-                ...video,
-                channelId: channel.id
-              })));
-            } catch (err) {
-              console.error(`Error fetching videos for channel ${channel.title}:`, err);
-            }
+        for (const channel of activeChannels) {
+          try {
+            const channelVideos = await fetchChannelUploads(channel.id);
+            videos.push(...channelVideos.map(video => ({
+              ...video,
+              channelId: channel.id
+            })));
+          } catch (err) {
+            console.error(`Error fetching videos for channel ${channel.title}:`, err);
           }
-          return videos;
-        })(),
-        getWatchHistory()
-      ]);
+        }
+        return videos;
+      })();
 
-      // Filter out already watched videos
+      // Filter out already watched videos using local storage
       const unwatchedVideos = allVideos.filter(
-        video => !watchHistory.some(watched => watched.id === video.id)
+        video => !isVideoWatched(video.id)
       );
 
       const sortedVideos = unwatchedVideos.sort((a, b) => 
@@ -168,9 +165,10 @@ export const useSubscriptions = () => {
     const selectedVideos = videos.filter(video => video.selected);
     
     try {
-      // Add each selected video to watch history in Supabase
+      // Add each selected video to watch history in Supabase and local storage
       for (const video of selectedVideos) {
         await addToWatchHistory({ ...video, selected: false, watched: true });
+        addToLocalWatchHistory({ ...video, watched: true });
       }
       
       // Remove watched videos from the list

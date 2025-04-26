@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Video } from '../types';
 import { fetchPlaylistVideos } from '../api/youtube';
-import { getWatchHistory, addToWatchHistory } from '../lib/db';
+import { addToWatchHistory } from '../lib/db';
+import { isVideoWatched, addToLocalWatchHistory } from '../utils/watchHistoryStorage';
 
 export const usePlaylist = () => {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -18,14 +19,11 @@ export const usePlaylist = () => {
     setError(null);
 
     try {
-      const [fetchedVideos, watchHistory] = await Promise.all([
-        fetchPlaylistVideos(url),
-        getWatchHistory()
-      ]);
+      const fetchedVideos = await fetchPlaylistVideos(url);
       
-      // Filter out already watched videos
+      // Filter out already watched videos using local storage
       const unwatchedVideos = fetchedVideos.filter(
-        video => !watchHistory.some(watched => watched.id === video.id)
+        video => !isVideoWatched(video.id)
       );
       
       setVideos(unwatchedVideos);
@@ -58,9 +56,10 @@ export const usePlaylist = () => {
     const selectedVideos = videos.filter(video => video.selected);
     
     try {
-      // Add each selected video to watch history in Supabase
+      // Add each selected video to watch history in Supabase and local storage
       for (const video of selectedVideos) {
         await addToWatchHistory({ ...video, selected: false, watched: true });
+        addToLocalWatchHistory({ ...video, watched: true });
       }
       
       // Remove watched videos from the list

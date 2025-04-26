@@ -3,15 +3,22 @@ import { VideoCardProps } from '../types';
 import { Calendar, CheckSquare, Square, PlayCircle, Eye, CheckCircle } from 'lucide-react';
 import { formatPublishedDate } from '../utils/dateUtils';
 import { formatViewCount } from '../utils/formatters';
-import { useWatchHistory } from '../hooks/useWatchHistory';
+
+interface VideoCardProps {
+  video: Video;
+  isWatched?: boolean;
+  onToggleSelect: (videoId: string) => void;
+  onMarkAsWatched: (videoId: string) => void;
+  showWatchedStatus?: boolean;
+}
 
 const VideoCard: React.FC<VideoCardProps> = ({
   video,
+  isWatched = false,
   onToggleSelect,
   onMarkAsWatched,
   showWatchedStatus = false
 }) => {
-  const { markAsWatched } = useWatchHistory();
   const [isVanishing, setIsVanishing] = useState(false);
 
   const handleThumbnailClick = () => {
@@ -23,18 +30,11 @@ const VideoCard: React.FC<VideoCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    try {
-      setIsVanishing(true);
-      await markAsWatched(video);
-      
-      // Wait for animation to complete before notifying parent
-      setTimeout(() => {
-        onMarkAsWatched?.(video.id);
-      }, 300); // Match this with animation duration
-    } catch (error) {
-      console.error('Failed to mark video as watched:', error);
-      setIsVanishing(false);
-    }
+    setIsVanishing(true);
+    // Wait for animation to complete before notifying parent
+    setTimeout(() => {
+      onMarkAsWatched?.(video.id);
+    }, 300); // Match this with animation duration
   };
 
   const formattedDate = formatPublishedDate(video.publishedAt);
@@ -77,7 +77,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
         </button>
 
         {/* Watched status indicator */}
-        {showWatchedStatus && video.watched && (
+        {showWatchedStatus && isWatched && (
           <div className="absolute bottom-2 right-2 flex items-center gap-1 
                           px-2 py-1 bg-green-500/80 text-white rounded-full 
                           text-sm backdrop-blur-sm z-20">

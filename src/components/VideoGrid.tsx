@@ -12,6 +12,7 @@ import {
   Filter,
   X
 } from 'lucide-react';
+import { useWatchHistory } from '../hooks/useWatchHistory';
 
 type SortOption = 'newest' | 'oldest' | 'title' | 'views';
 
@@ -27,6 +28,10 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const [showSortMenu, setShowSortMenu] = useState(false);
   const selectedCount = videos.filter(video => video.selected).length;
   const hasVideos = videos.length > 0;
+  const { watchedVideos } = useWatchHistory();
+
+  // Create a Set of watched video IDs for O(1) lookup
+  const watchedVideoIds = new Set(watchedVideos.map(v => v.id));
 
   const handleSelectAll = () => {
     const newSelectedState = !isAllSelected;
@@ -192,9 +197,9 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           <VideoCard
             key={video.id}
             video={video}
+            isWatched={watchedVideoIds.has(video.id)}
             onToggleSelect={onToggleSelect}
             onMarkAsWatched={onMarkAsWatched}
-            showWatchedStatus={true}
           />
         ))}
       </div>
