@@ -18,6 +18,10 @@ export default {
           900: '#920000',
           950: '#500000',
         },
+        gray: {
+          800: '#1a1a1a', // Darker gray for dark mode
+          900: '#0f0f0f', // Even darker
+        }
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

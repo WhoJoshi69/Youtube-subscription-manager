@@ -3,7 +3,7 @@ import PlaylistFetcher from './components/PlaylistFetcher';
 import VideoGrid from './components/VideoGrid';
 import WatchedVideosGrid from './components/WatchedVideosGrid';
 import { usePlaylist } from './hooks/usePlaylist';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Youtube } from 'lucide-react';
 import Subscriptions from './components/Subscriptions';
 import History from './components/History';
 
@@ -48,46 +48,50 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-      <div className="container mx-auto px-4 py-8">
-        <header className="w-full flex justify-end mb-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white">
+      <div className="container mx-auto px-6 sm:px-8 py-8 max-w-7xl">
+        <header className="w-full flex justify-between items-center mb-8">
+          <div className="flex items-center gap-2">
+            <Youtube size={24} className="text-red-600" />
+            <h1 className="text-xl font-bold">WhoJoshi Subscription Manager</h1>
+          </div>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+            className="p-1.5 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
             aria-label="Toggle dark mode"
           >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </header>
 
-        <main className="flex flex-col items-center space-y-10">
-          <div className="w-full flex justify-center gap-4 mb-6">
+        <main className="flex flex-col items-center space-y-8">
+          <div className="w-full flex justify-center gap-3">
             <button
               onClick={() => setActiveSection('playlist')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
                 activeSection === 'playlist'
                   ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800'
+                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               Playlist Viewer
             </button>
             <button
               onClick={() => setActiveSection('subscriptions')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
                 activeSection === 'subscriptions'
                   ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800'
+                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               Subscriptions
             </button>
             <button
               onClick={() => setActiveSection('history')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-colors text-sm ${
                 activeSection === 'history'
                   ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-800'
+                  : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               History
@@ -122,8 +126,8 @@ function App() {
           )}
         </main>
 
-        <footer className="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>© 2025 YouTube Playlist Viewer. This is a demonstration project.</p>
+        <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>© 2024 WhoJoshi Subscription Manager</p>
         </footer>
       </div>
     </div>

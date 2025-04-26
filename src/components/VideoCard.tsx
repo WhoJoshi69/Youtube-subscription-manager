@@ -29,7 +29,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onToggleSelect }) => {
         
         {/* Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
-          <PlayCircle size={48} className="text-white transform scale-90 group-hover:scale-100 transition-transform duration-300" />
+          <PlayCircle size={36} className="text-white transform scale-90 group-hover:scale-100 transition-transform duration-300" />
         </div>
 
         {/* Selection Checkbox */}
@@ -41,8 +41,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onToggleSelect }) => {
           }}
         >
           {video.selected ? 
-            <CheckSquare size={24} className="text-blue-400" /> : 
-            <Square size={24} className="text-white" />
+            <CheckSquare size={18} className="text-blue-400" /> : 
+            <Square size={18} className="text-white" />
           }
         </div>
 
@@ -53,19 +53,19 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onToggleSelect }) => {
       </div>
 
       {/* Video Info */}
-      <div className="p-4">
+      <div className="p-3">
         <h3 
-          className="font-medium text-gray-900 dark:text-white line-clamp-2 h-12 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors"
+          className="font-medium text-gray-900 dark:text-white line-clamp-2 text-sm mb-2 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors"
           onClick={handleThumbnailClick}
         >
           {video.title}
         </h3>
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors">
+        <div className="flex items-center justify-between text-xs">
+          <p className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors truncate max-w-[70%]">
             {video.channelTitle}
           </p>
-          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-            <Calendar size={14} className="mr-1" />
+          <div className="flex items-center text-gray-500 dark:text-gray-400">
+            <Calendar size={12} className="mr-1" />
             <span title={video.publishedAt}>{formattedDate}</span>
           </div>
         </div>
