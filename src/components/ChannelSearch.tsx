@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { searchYouTubeChannel } from '../api/youtube';
+import { useSubscriptions } from '../hooks/useSubscriptions';
 
 interface ChannelSearchProps {
   onFetchPlaylist: (url: string) => Promise<void>;
@@ -13,6 +14,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
   isLoading,
   error 
 }) => {
+  const { subscribedChannels, subscribeToChannel, unsubscribeFromChannel } = useSubscriptions();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{
     id: string;
@@ -91,27 +93,51 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
         <div className="space-y-4">
           <h3 className="text-lg font-semibold mb-3">Search Results:</h3>
           <div className="grid gap-4">
-            {searchResults.map((channel) => (
-              <div
-                key={channel.id}
-                className="flex items-center gap-4 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleChannelSelect(channel.id)}
-              >
-                <img
-                  src={channel.thumbnail}
-                  alt={channel.title}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 dark:text-white">
-                    {channel.title}
-                  </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {channel.subscriberCount} subscribers
-                  </p>
+            {searchResults.map((channel) => {
+              const isSubscribed = subscribedChannels.some(c => c.id === channel.id);
+              
+              return (
+                <div
+                  key={channel.id}
+                  className="flex items-center gap-4 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <img
+                    src={channel.thumbnail}
+                    alt={channel.title}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      {channel.title}
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {channel.subscriberCount} subscribers
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => isSubscribed 
+                        ? unsubscribeFromChannel(channel.id)
+                        : subscribeToChannel(channel)
+                      }
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        isSubscribed
+                          ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
+                          : 'bg-red-600 hover:bg-red-700 text-white'
+                      }`}
+                    >
+                      {isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+                    </button>
+                    <button
+                      onClick={() => handleChannelSelect(channel.id)}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    >
+                      View Videos
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -63,6 +63,15 @@ export const usePlaylist = () => {
     );
   };
 
+  const handleSelectAll = (ids: string[]) => {
+    setVideos(prevVideos => 
+      prevVideos.map(video => ({
+        ...video,
+        selected: ids.includes(video.id)
+      }))
+    );
+  };
+
   const markAsWatched = () => {
     const selectedVideos = videos.filter(video => video.selected);
     setWatchedVideos(prev => [...prev, ...selectedVideos.map(v => ({ ...v, selected: false, watched: true }))]);
@@ -76,6 +85,7 @@ export const usePlaylist = () => {
     error,
     fetchPlaylist,
     toggleSelect,
+    handleSelectAll,
     markAsWatched
   };
 };

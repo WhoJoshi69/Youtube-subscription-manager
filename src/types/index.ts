@@ -18,14 +18,29 @@ export interface PlaylistFetcherProps {
 export interface VideoGridProps {
   videos: Video[];
   onToggleSelect: (id: string) => void;
+  onSelectAll: (ids: string[]) => void;
   onMarkAsWatched: () => void;
   isLoading: boolean;
   title?: string;
   showWatchedStatus?: boolean;
+  selectedCount?: number;
 }
 
 export interface VideoCardProps {
   video: Video;
   onToggleSelect: (id: string) => void;
   showWatchedStatus?: boolean;
+}
+
+export interface Channel {
+  id: string;
+  title: string;
+  thumbnail: string;
+  subscriberCount: string;
+  isSubscribed?: boolean;
+}
+
+export interface SubscriptionState {
+  channels: Channel[];
+  lastUpdated?: string;
 }

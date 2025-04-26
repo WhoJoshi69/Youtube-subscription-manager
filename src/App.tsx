@@ -4,6 +4,7 @@ import VideoGrid from './components/VideoGrid';
 import WatchedVideosGrid from './components/WatchedVideosGrid';
 import { usePlaylist } from './hooks/usePlaylist';
 import { Moon, Sun } from 'lucide-react';
+import Subscriptions from './components/Subscriptions';
 
 function App() {
   const {
@@ -13,10 +14,12 @@ function App() {
     error,
     fetchPlaylist,
     toggleSelect,
+    handleSelectAll,
     markAsWatched
   } = usePlaylist();
 
   const [darkMode, setDarkMode] = useState(true);
+  const [activeSection, setActiveSection] = useState<'playlist' | 'subscriptions'>('playlist');
 
   // Check for preferred color scheme
   useEffect(() => {
@@ -52,24 +55,55 @@ function App() {
         </header>
 
         <main className="flex flex-col items-center space-y-10">
-          <PlaylistFetcher
-            onFetchPlaylist={fetchPlaylist}
-            isLoading={isLoading}
-            error={error}
-          />
-          <VideoGrid
-            videos={videos}
-            onToggleSelect={toggleSelect}
-            onMarkAsWatched={markAsWatched}
-            isLoading={isLoading}
-          />
-          {watchedVideos.length > 0 && (
-            <WatchedVideosGrid
-              videos={watchedVideos}
-              onToggleSelect={toggleSelect}
-              onMarkAsWatched={markAsWatched}
-              isLoading={false}
-            />
+          <div className="w-full flex justify-center gap-4 mb-6">
+            <button
+              onClick={() => setActiveSection('playlist')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeSection === 'playlist'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-800'
+              }`}
+            >
+              Playlist Viewer
+            </button>
+            <button
+              onClick={() => setActiveSection('subscriptions')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeSection === 'subscriptions'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-800'
+              }`}
+            >
+              Subscriptions
+            </button>
+          </div>
+
+          {activeSection === 'playlist' ? (
+            <>
+              <PlaylistFetcher
+                onFetchPlaylist={fetchPlaylist}
+                isLoading={isLoading}
+                error={error}
+              />
+              <VideoGrid
+                videos={videos}
+                onToggleSelect={toggleSelect}
+                onSelectAll={handleSelectAll}
+                onMarkAsWatched={markAsWatched}
+                isLoading={isLoading}
+              />
+              {watchedVideos.length > 0 && (
+                <WatchedVideosGrid
+                  videos={watchedVideos}
+                  onToggleSelect={toggleSelect}
+                  onSelectAll={handleSelectAll}
+                  onMarkAsWatched={markAsWatched}
+                  isLoading={false}
+                />
+              )}
+            </>
+          ) : (
+            <Subscriptions />
           )}
         </main>
 

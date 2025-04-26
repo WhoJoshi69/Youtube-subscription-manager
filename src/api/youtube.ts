@@ -200,11 +200,33 @@ export const searchYouTubeChannel = async (query: string): Promise<YouTubeChanne
       id: channel.id,
       title: channel.snippet.title,
       thumbnail: channel.snippet.thumbnails.medium.url,
-      subscriberCount: formatSubscriberCount(parseInt(channel.statistics.subscriberCount))
+      subscriberCount: formatSubscriberCount(parseInt(channel.statistics.subscriberCount)),
+      isSubscribed: false // Will be updated by the UI
     }));
 
   } catch (error) {
     console.error('Error searching channels:', error);
     throw error instanceof Error ? error : new Error('Failed to search channels');
+  }
+};
+
+export const fetchChannelUploads = async (channelId: string): Promise<Video[]> => {
+  if (!YOUTUBE_API_KEY) {
+    throw new Error("YouTube API key is not configured");
+  }
+
+  try {
+    // Convert channel ID to uploads playlist ID
+    const uploadsPlaylistId = channelId.replace('UC', 'UU');
+    
+    // Use the existing fetchPlaylistVideos function
+    const videos = await fetchPlaylistVideos(
+      `https://www.youtube.com/playlist?list=${uploadsPlaylistId}`
+    );
+    
+    return videos;
+  } catch (error) {
+    console.error('Error fetching channel uploads:', error);
+    throw error;
   }
 };
