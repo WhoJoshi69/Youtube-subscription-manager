@@ -5,6 +5,7 @@ import WatchedVideosGrid from './components/WatchedVideosGrid';
 import { usePlaylist } from './hooks/usePlaylist';
 import { Moon, Sun } from 'lucide-react';
 import Subscriptions from './components/Subscriptions';
+import History from './components/History';
 
 function App() {
   const {
@@ -15,11 +16,12 @@ function App() {
     fetchPlaylist,
     toggleSelect,
     handleSelectAll,
-    markAsWatched
+    markAsWatched,
+    setWatchedVideos
   } = usePlaylist();
 
   const [darkMode, setDarkMode] = useState(true);
-  const [activeSection, setActiveSection] = useState<'playlist' | 'subscriptions'>('playlist');
+  const [activeSection, setActiveSection] = useState<'playlist' | 'subscriptions' | 'history'>('playlist');
 
   // Check for preferred color scheme
   useEffect(() => {
@@ -39,6 +41,10 @@ function App() {
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleRemoveFromHistory = (videoIds: string[]) => {
+    setWatchedVideos(prev => prev.filter(video => !videoIds.includes(video.id)));
   };
 
   return (
@@ -76,6 +82,16 @@ function App() {
             >
               Subscriptions
             </button>
+            <button
+              onClick={() => setActiveSection('history')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeSection === 'history'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-800'
+              }`}
+            >
+              History
+            </button>
           </div>
 
           {activeSection === 'playlist' ? (
@@ -92,18 +108,17 @@ function App() {
                 onMarkAsWatched={markAsWatched}
                 isLoading={isLoading}
               />
-              {watchedVideos.length > 0 && (
-                <WatchedVideosGrid
-                  videos={watchedVideos}
-                  onToggleSelect={toggleSelect}
-                  onSelectAll={handleSelectAll}
-                  onMarkAsWatched={markAsWatched}
-                  isLoading={false}
-                />
-              )}
             </>
-          ) : (
+          ) : activeSection === 'subscriptions' ? (
             <Subscriptions />
+          ) : (
+            <History
+              watchedVideos={watchedVideos}
+              onToggleSelect={toggleSelect}
+              onSelectAll={handleSelectAll}
+              onRemoveFromHistory={handleRemoveFromHistory}
+              isLoading={isLoading}
+            />
           )}
         </main>
 
