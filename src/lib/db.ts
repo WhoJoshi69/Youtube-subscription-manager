@@ -70,7 +70,7 @@ export async function getWatchHistory() {
 }
 
 export async function addToWatchHistory(video: Video) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('watch_history')
     .insert([
       {
@@ -82,16 +82,12 @@ export async function addToWatchHistory(video: Video) {
         watched_at: new Date().toISOString(),
         url: video.url
       }
-    ])
-    .select()
-    .single();
+    ]);
 
   if (error) {
     console.error('Error adding to watch history:', error);
     throw error;
   }
-
-  return data;
 }
 
 export async function removeFromWatchHistory(videoIds: string[]) {

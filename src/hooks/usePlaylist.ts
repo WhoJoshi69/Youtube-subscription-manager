@@ -1,33 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Video } from '../types';
 import { fetchPlaylistVideos } from '../api/youtube';
+import { getWatchHistory, addToWatchHistory } from '../lib/db';
 
 export const usePlaylist = () => {
-  const [videos, setVideos] = useState<Video[]>(() => {
-    // Try to load last viewed playlist from localStorage
-    const lastPlaylist = localStorage.getItem('last_playlist');
-    return lastPlaylist ? JSON.parse(lastPlaylist) : [];
-  });
-
-  const [watchedVideos, setWatchedVideos] = useState<Video[]>(() => {
-    const watched = localStorage.getItem('watched_videos');
-    return watched ? JSON.parse(watched) : [];
-  });
-
+  const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Save videos to localStorage whenever they change
-  useEffect(() => {
-    if (videos.length > 0) {
-      localStorage.setItem('last_playlist', JSON.stringify(videos));
-    }
-  }, [videos]);
-
-  // Save watched videos to localStorage
-  useEffect(() => {
-    localStorage.setItem('watched_videos', JSON.stringify(watchedVideos));
-  }, [watchedVideos]);
 
   const fetchPlaylist = async (url: string) => {
     if (!url) {
@@ -39,11 +18,14 @@ export const usePlaylist = () => {
     setError(null);
 
     try {
-      const fetchedVideos = await fetchPlaylistVideos(url);
+      const [fetchedVideos, watchHistory] = await Promise.all([
+        fetchPlaylistVideos(url),
+        getWatchHistory()
+      ]);
       
       // Filter out already watched videos
       const unwatchedVideos = fetchedVideos.filter(
-        video => !watchedVideos.some(watched => watched.id === video.id)
+        video => !watchHistory.some(watched => watched.id === video.id)
       );
       
       setVideos(unwatchedVideos);
@@ -72,15 +54,25 @@ export const usePlaylist = () => {
     );
   };
 
-  const markAsWatched = () => {
+  const markAsWatched = async () => {
     const selectedVideos = videos.filter(video => video.selected);
-    setWatchedVideos(prev => [...prev, ...selectedVideos.map(v => ({ ...v, selected: false, watched: true }))]);
-    setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+    
+    try {
+      // Add each selected video to watch history in Supabase
+      for (const video of selectedVideos) {
+        await addToWatchHistory({ ...video, selected: false, watched: true });
+      }
+      
+      // Remove watched videos from the list
+      setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+    } catch (err) {
+      console.error('Error marking videos as watched:', err);
+      setError('Failed to mark videos as watched');
+    }
   };
 
   return {
     videos,
-    watchedVideos,
     isLoading,
     error,
     fetchPlaylist,

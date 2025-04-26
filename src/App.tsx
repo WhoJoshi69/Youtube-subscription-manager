@@ -8,6 +8,7 @@ import Subscriptions from './components/Subscriptions';
 import History from './components/History';
 import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
+import { migrateWatchHistory } from './utils/migrateHistory';
 
 function App() {
   const {
@@ -53,6 +54,10 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        // Run migration when user is authenticated
+        migrateWatchHistory().catch(console.error);
+      }
     });
 
     const {

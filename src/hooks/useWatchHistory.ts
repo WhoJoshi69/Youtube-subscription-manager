@@ -11,20 +11,23 @@ export const useWatchHistory = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadWatchHistory = async () => {
+  const loadHistory = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const history = await getWatchHistory();
       setWatchedVideos(history);
     } catch (err) {
+      console.error('Error loading watch history:', err);
       setError('Failed to load watch history');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Load watch history on mount
   useEffect(() => {
-    loadWatchHistory();
+    loadHistory();
   }, []);
 
   const markAsWatched = async (video: Video) => {
@@ -32,6 +35,7 @@ export const useWatchHistory = () => {
       await addToWatchHistory(video);
       setWatchedVideos(prev => [video, ...prev]);
     } catch (err) {
+      console.error('Error marking video as watched:', err);
       setError('Failed to mark video as watched');
     }
   };
@@ -43,6 +47,7 @@ export const useWatchHistory = () => {
         prev.filter(video => !videoIds.includes(video.id))
       );
     } catch (err) {
+      console.error('Error removing from history:', err);
       setError('Failed to remove videos from history');
     }
   };
@@ -53,6 +58,6 @@ export const useWatchHistory = () => {
     error,
     markAsWatched,
     removeFromHistory,
-    refreshHistory: loadWatchHistory
+    refreshHistory: loadHistory
   };
 }; 
