@@ -23,4 +23,16 @@ export const ensureAuthenticated = async () => {
   }
   
   return session;
+};
+
+// Initialize the default user if it doesn't exist
+export const initializeDefaultUser = async () => {
+  const { data: { user }, error } = await supabase.auth.signUp({
+    email: 'whojoshi',
+    password: 'darshit2002',
+  });
+
+  if (error && !error.message.includes('User already registered')) {
+    console.error('Error creating default user:', error);
+  }
 }; 
