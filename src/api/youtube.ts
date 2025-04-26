@@ -159,7 +159,7 @@ function formatSubscriberCount(count: number): string {
   return count.toString();
 }
 
-export const searchYouTubeChannel = async (query: string): Promise<YouTubeChannel[]> => {
+export const searchYouTubeChannel = async (query: string) => {
   if (!YOUTUBE_API_KEY) {
     throw new Error("YouTube API key is not configured");
   }
@@ -185,7 +185,7 @@ export const searchYouTubeChannel = async (query: string): Promise<YouTubeChanne
 
     // Fetch detailed channel information
     const channelsUrl = new URL('https://www.googleapis.com/youtube/v3/channels');
-    channelsUrl.searchParams.append('part', 'snippet,statistics');
+    channelsUrl.searchParams.append('part', 'snippet,statistics,brandingSettings');
     channelsUrl.searchParams.append('id', channelIds.join(','));
     channelsUrl.searchParams.append('key', YOUTUBE_API_KEY);
 
@@ -201,7 +201,10 @@ export const searchYouTubeChannel = async (query: string): Promise<YouTubeChanne
       title: channel.snippet.title,
       thumbnail: channel.snippet.thumbnails.medium.url,
       subscriberCount: formatSubscriberCount(parseInt(channel.statistics.subscriberCount)),
-      isSubscribed: false // Will be updated by the UI
+      description: channel.snippet.description,
+      videoCount: channel.statistics.videoCount,
+      joinedDate: new Date(channel.snippet.publishedAt).toLocaleDateString(),
+      isSubscribed: false
     }));
 
   } catch (error) {
