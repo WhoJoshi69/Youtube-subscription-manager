@@ -1,5 +1,5 @@
 import { Video } from '../types';
-import { addToWatchHistory } from '../lib/db';
+import { addToWatchHistoryBatch } from '../lib/db';
 
 export const migrateWatchHistory = async () => {
   try {
@@ -17,10 +17,8 @@ export const migrateWatchHistory = async () => {
 
     const videos: Video[] = JSON.parse(watchedVideos);
 
-    // Migrate each video to Supabase
-    for (const video of videos) {
-      await addToWatchHistory(video);
-    }
+    // Migrate all videos in a single batch operation
+    await addToWatchHistoryBatch(videos);
 
     // Mark migration as complete
     localStorage.setItem('history_migrated', 'true');

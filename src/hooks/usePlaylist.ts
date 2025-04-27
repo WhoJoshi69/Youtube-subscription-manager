@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Video } from '../types';
 import { fetchPlaylistVideos } from '../api/youtube';
-import { addToWatchHistory } from '../lib/db';
+import { addToWatchHistory, addToWatchHistoryBatch } from '../lib/db';
 import { isVideoWatched, addToLocalWatchHistory } from '../utils/watchHistoryStorage';
 
 export const usePlaylist = () => {
@@ -105,11 +105,15 @@ export const usePlaylist = () => {
     const selectedVideos = videos.filter(video => video.selected);
     
     try {
-      // Add each selected video to watch history in Supabase and local storage
-      for (const video of selectedVideos) {
-        await addToWatchHistory({ ...video, selected: false, watched: true });
-        addToLocalWatchHistory({ ...video, watched: true });
-      }
+      // Update local storage immediately for instant UI feedback
+      selectedVideos.forEach(video => {
+        addToLocalWatchHistory({ ...video, selected: false, watched: true });
+      });
+      
+      // Update database in a single batch operation
+      await addToWatchHistoryBatch(
+        selectedVideos.map(video => ({ ...video, selected: false, watched: true }))
+      );
       
       // Remove watched videos from the list
       setVideos(prevVideos => prevVideos.filter(video => !video.selected));

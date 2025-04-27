@@ -102,6 +102,27 @@ export async function removeFromWatchHistory(videoIds: string[]) {
   }
 }
 
+export async function addToWatchHistoryBatch(videos: Video[]) {
+  const { error } = await supabase
+    .from('watch_history')
+    .insert(
+      videos.map(video => ({
+        id: video.id,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        channel_title: video.channelTitle,
+        published_at: video.publishedAt,
+        watched_at: new Date().toISOString(),
+        url: video.url
+      }))
+    );
+
+  if (error) {
+    console.error('Error adding to watch history:', error);
+    throw error;
+  }
+}
+
 // Filtered Channels
 export async function getFilteredChannels() {
   const { data, error } = await supabase

@@ -3,7 +3,8 @@ import { Video } from '../types';
 import {
   getWatchHistory,
   addToWatchHistory,
-  removeFromWatchHistory
+  removeFromWatchHistory,
+  addToWatchHistoryBatch
 } from '../lib/db';
 import { 
   getLocalWatchHistory, 
@@ -124,14 +125,15 @@ export const useWatchHistory = () => {
         nextPageToken = result.nextPageToken;
       } while (nextPageToken);
       
-      // Mark all videos as watched
-      for (const video of allVideos) {
-        // Update local storage
+      // Update local storage immediately
+      allVideos.forEach(video => {
         addToLocalWatchHistory({ ...video, watched: true });
-        
-        // Update database (in batches if needed)
-        await addToWatchHistory({ ...video, selected: false, watched: true });
-      }
+      });
+      
+      // Update database in a single batch operation
+      await addToWatchHistoryBatch(
+        allVideos.map(video => ({ ...video, selected: false, watched: true }))
+      );
       
       // Refresh watch history state
       setWatchedVideos(prev => [
