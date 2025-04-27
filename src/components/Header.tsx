@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { Youtube, Menu, X, Search, Moon, Sun } from 'lucide-react';
+import { Youtube, Menu, X, Search, Moon, Sun, List, ListEnd } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
   onThemeToggle: () => void;
   activeSection: 'playlist' | 'subscriptions' | 'history';
   onSectionChange: (section: 'playlist' | 'subscriptions' | 'history') => void;
+  isPartialLoading: boolean;
+  onPartialLoadingToggle: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   darkMode,
   onThemeToggle,
   activeSection,
-  onSectionChange
+  onSectionChange,
+  isPartialLoading,
+  onPartialLoadingToggle
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -54,7 +58,24 @@ const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
+            {activeSection === 'playlist' && (
+              <button
+                onClick={onPartialLoadingToggle}
+                className="p-2.5 rounded-xl hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors backdrop-blur-sm group relative"
+                aria-label="Toggle loading mode"
+              >
+                {isPartialLoading ? (
+                  <List size={20} className="text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <ListEnd size={20} className="text-gray-700 dark:text-gray-300" />
+                )}
+                {/* Tooltip */}
+                <span className="absolute -bottom-12 left-50 transform -translate-x-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {isPartialLoading ? 'Partial Loading: On' : 'Partial Loading: Off'}
+                </span>
+              </button>
+            )}
             <button
               onClick={onThemeToggle}
               className="p-2.5 rounded-xl hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors backdrop-blur-sm"

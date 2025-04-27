@@ -12,6 +12,7 @@ export const usePlaylist = () => {
   const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
   const [currentPlaylistUrl, setCurrentPlaylistUrl] = useState<string | null>(null);
+  const [isPartialLoading, setIsPartialLoading] = useState(true);
 
   const fetchPlaylist = async (url: string, isInitialLoad: boolean = true) => {
     if (!url) {
@@ -42,8 +43,27 @@ export const usePlaylist = () => {
       );
       
       setVideos(prev => isInitialLoad ? unwatchedVideos : [...prev, ...unwatchedVideos]);
-      setNextPageToken(result.nextPageToken);
-      setHasMoreVideos(!!result.nextPageToken);
+      
+      // If partial loading is disabled, keep fetching until we get all videos
+      if (!isPartialLoading && result.nextPageToken) {
+        const allVideos = [...unwatchedVideos];
+        let nextToken = result.nextPageToken;
+        
+        while (nextToken) {
+          const nextResult = await fetchPlaylistVideos(url, nextToken);
+          const nextUnwatchedVideos = nextResult.videos.filter(
+            video => !isVideoWatched(video.id)
+          );
+          allVideos.push(...nextUnwatchedVideos);
+          nextToken = nextResult.nextPageToken;
+        }
+        
+        setVideos(allVideos);
+        setHasMoreVideos(false);
+      } else {
+        setNextPageToken(result.nextPageToken);
+        setHasMoreVideos(!!result.nextPageToken);
+      }
     } catch (err) {
       console.error('Error fetching playlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch playlist videos');
@@ -109,6 +129,8 @@ export const usePlaylist = () => {
     loadMoreVideos,
     toggleSelect,
     handleSelectAll,
-    markAsWatched
+    markAsWatched,
+    isPartialLoading,
+    setIsPartialLoading
   };
 };

@@ -26,7 +26,9 @@ function App() {
     toggleSelect,
     handleSelectAll,
     markAsWatched,
-    setWatchedVideos
+    setWatchedVideos,
+    isPartialLoading,
+    setIsPartialLoading
   } = usePlaylist();
 
   const [darkMode, setDarkMode] = useState(true);
@@ -84,6 +86,10 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const togglePartialLoading = () => {
+    setIsPartialLoading(!isPartialLoading);
+  };
+
   const handleRemoveFromHistory = (videoIds: string[]) => {
     setWatchedVideos(prev => prev.filter(video => !videoIds.includes(video.id)));
   };
@@ -117,6 +123,8 @@ function App() {
         onThemeToggle={toggleTheme}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
+        isPartialLoading={isPartialLoading}
+        onPartialLoadingToggle={togglePartialLoading}
       />
       
       <div className="container mx-auto px-4 sm:px-6 py-6">
