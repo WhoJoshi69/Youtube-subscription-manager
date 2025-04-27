@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, CheckCircle } from 'lucide-react';
 import { searchYouTubeChannel } from '../api/youtube';
 import { useSubscriptions } from '../hooks/useSubscriptions';
+import { useWatchHistory } from '../hooks/useWatchHistory';
 import Loader from './Loader';
 
 interface ChannelSearchProps {
@@ -16,6 +17,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
   error 
 }) => {
   const { subscribedChannels, subscribeToChannel, unsubscribeFromChannel } = useSubscriptions();
+  const { markChannelAsWatched } = useWatchHistory();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{
     id: string;
@@ -25,6 +27,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
   }>>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [markingWatched, setMarkingWatched] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +53,20 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
     const playlistUrl = `https://www.youtube.com/playlist?list=${uploadsPlaylistId}`;
     await onFetchPlaylist(playlistUrl);
     setSearchResults([]); // Clear results after selection
+  };
+
+  const handleMarkChannelWatched = async (channelId: string) => {
+    setMarkingWatched(channelId);
+    try {
+      await markChannelAsWatched(channelId);
+      // Show success indicator temporarily
+      setTimeout(() => {
+        setMarkingWatched(null);
+      }, 2000);
+    } catch (error) {
+      setSearchError('Failed to mark channel as watched');
+      setMarkingWatched(null);
+    }
   };
 
   return (
@@ -96,6 +113,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
           <div className="grid gap-4">
             {searchResults.map((channel) => {
               const isSubscribed = subscribedChannels.some(c => c.id === channel.id);
+              const isMarking = markingWatched === channel.id;
               
               return (
                 <div
@@ -116,6 +134,24 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleMarkChannelWatched(channel.id)}
+                      disabled={isMarking}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        isMarking 
+                          ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {isMarking ? (
+                        <>
+                          <CheckCircle size={16} className="mr-2 inline" />
+                          <span>Marked Watched</span>
+                        </>
+                      ) : (
+                        'Mark Watched'
+                      )}
+                    </button>
                     <button
                       onClick={() => isSubscribed 
                         ? unsubscribeFromChannel(channel.id)

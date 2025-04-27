@@ -11,6 +11,7 @@ import {
   addToLocalWatchHistory,
   removeFromLocalWatchHistory
 } from '../utils/watchHistoryStorage';
+import { fetchChannelUploads } from '../api/youtube';
 
 export const useWatchHistory = () => {
   const [watchedVideos, setWatchedVideos] = useState<Video[]>([]);
@@ -108,11 +109,52 @@ export const useWatchHistory = () => {
     }
   };
 
+  const markChannelAsWatched = async (channelId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch all videos from this channel
+      const uploadsPlaylistId = channelId.replace('UC', 'UU');
+      let nextPageToken: string | undefined;
+      let allVideos: Video[] = [];
+      
+      do {
+        const result = await fetchChannelUploads(channelId, nextPageToken, 50);
+        allVideos = [...allVideos, ...result.videos];
+        nextPageToken = result.nextPageToken;
+      } while (nextPageToken);
+      
+      // Mark all videos as watched
+      for (const video of allVideos) {
+        // Update local storage
+        addToLocalWatchHistory({ ...video, watched: true });
+        
+        // Update database (in batches if needed)
+        await addToWatchHistory({ ...video, selected: false, watched: true });
+      }
+      
+      // Refresh watch history state
+      setWatchedVideos(prev => [
+        ...allVideos.map(video => ({ ...video, watched: true })),
+        ...prev.filter(v => !allVideos.some(newVideo => newVideo.id === v.id))
+      ]);
+      
+      return true;
+    } catch (err) {
+      console.error('Error marking channel as watched:', err);
+      setError('Failed to mark channel videos as watched');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     watchedVideos,
     isLoading,
     error,
     markAsWatched,
+    markChannelAsWatched,
     removeFromHistory,
     refreshHistory: loadHistory,
     isWatched
