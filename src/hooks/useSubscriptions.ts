@@ -18,11 +18,6 @@ export const useSubscriptions = () => {
   const [error, setError] = useState<string | null>(null);
   const [filteredChannels, setFilteredChannels] = useState<string[]>([]);
   
-  // Add new states for pagination
-  const [pageTokens, setPageTokens] = useState<Record<string, string | null>>({});
-  const [hasMoreVideos, setHasMoreVideos] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
   // Load subscriptions and filtered channels on mount
   useEffect(() => {
     const loadData = async () => {
@@ -47,20 +42,14 @@ export const useSubscriptions = () => {
     loadData();
   }, []);
 
-  const fetchSubscriptionVideos = async (isInitialLoad: boolean = true) => {
+  const fetchSubscriptionVideos = async () => {
     if (subscribedChannels.length === 0) {
       setVideos([]);
-      setHasMoreVideos(false);
       return;
     }
 
-    if (isInitialLoad) {
-      setIsLoading(true);
-      setError(null);
-      setPageTokens({});
-    } else {
-      setIsLoadingMore(true);
-    }
+    setIsLoading(true);
+    setError(null);
 
     try {
       const activeChannels = subscribedChannels.filter(
@@ -68,23 +57,13 @@ export const useSubscriptions = () => {
       );
 
       const newVideos: Video[] = [];
-      const newPageTokens: Record<string, string | null> = { ...pageTokens };
       let hasErrors = false;
 
       for (const channel of activeChannels) {
         try {
-          // Skip if we've already loaded all videos for this channel
-          if (!isInitialLoad && newPageTokens[channel.id] === null) {
-            continue;
-          }
-
-          const result = await fetchChannelUploads(
-            channel.id,
-            isInitialLoad ? undefined : newPageTokens[channel.id]
-          );
-
+          // Fetch all videos at once without pagination
+          const result = await fetchChannelUploads(channel.id);
           newVideos.push(...result.videos);
-          newPageTokens[channel.id] = result.nextPageToken || null;
         } catch (err) {
           console.error(`Error fetching videos for channel ${channel.title}:`, err);
           hasErrors = true;
@@ -95,44 +74,26 @@ export const useSubscriptions = () => {
         throw new Error('Failed to fetch videos from any channel');
       }
 
-      // Filter out watched videos
-      const unwatchedVideos = newVideos.filter(
-        video => !isVideoWatched(video.id)
+      // Filter for videos after April 20, 2025
+      const cutoffDate = new Date('2025-04-20T00:00:00Z');
+      
+      // Filter out watched videos and videos before the cutoff date
+      const filteredVideos = newVideos.filter(
+        video => !isVideoWatched(video.id) && new Date(video.publishedAt) >= cutoffDate
       );
 
       // Sort by date
-      const sortedVideos = unwatchedVideos.sort((a, b) => 
+      const sortedVideos = filteredVideos.sort((a, b) => 
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
 
       // Update videos state
-      setVideos(prev => 
-        isInitialLoad ? sortedVideos : [...prev, ...sortedVideos]
-      );
-      
-      // Update page tokens
-      setPageTokens(newPageTokens);
-      
-      // Check if we have more videos to load
-      setHasMoreVideos(Object.values(newPageTokens).some(token => token !== null));
+      setVideos(sortedVideos);
     } catch (err) {
       setError('Failed to fetch subscription videos');
-      if (isInitialLoad) {
-        setVideos([]);
-      }
+      setVideos([]);
     } finally {
-      if (isInitialLoad) {
-        setIsLoading(false);
-      } else {
-        setIsLoadingMore(false);
-      }
-    }
-  };
-
-  // Function to load more videos
-  const loadMoreVideos = () => {
-    if (!isLoadingMore && hasMoreVideos) {
-      fetchSubscriptionVideos(false);
+      setIsLoading(false);
     }
   };
 
@@ -230,14 +191,11 @@ export const useSubscriptions = () => {
     filteredChannels,
     videos,
     isLoading,
-    isLoadingMore,
-    hasMoreVideos,
     error,
     subscribeToChannel,
     unsubscribeFromChannel,
     toggleChannelFilter,
-    refreshVideos: () => fetchSubscriptionVideos(true),
-    loadMoreVideos,
+    refreshVideos: () => fetchSubscriptionVideos(),
     hideAllChannels,
     showAllChannels,
     toggleSelect,
