@@ -24,10 +24,14 @@ const Subscriptions: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const handleVideoWatched = async (videoId: string) => {
-    // Remove the watched video from the list
-    await markAsWatched();
-    // Optionally refresh the videos list
-    refreshVideos();
+    try {
+      // Pass the videoId to mark as watched
+      await markAsWatched(videoId);
+      // Refresh videos list
+      await refreshVideos();
+    } catch (error) {
+      console.error('Error marking video as watched:', error);
+    }
   };
 
   return (

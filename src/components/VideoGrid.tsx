@@ -31,8 +31,6 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const selectedCount = videos.filter(video => video.selected).length;
-  const hasVideos = videos.length > 0;
   const { watchedVideos } = useWatchHistory();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -40,11 +38,19 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   // Create a Set of watched video IDs for O(1) lookup
   const watchedVideoIds = new Set(watchedVideos.map(v => v.id));
 
+  // Filter out watched videos
+  const unwatchedVideos = useMemo(() => {
+    return videos.filter(video => !watchedVideoIds.has(video.id));
+  }, [videos, watchedVideoIds]);
+
+  const selectedCount = unwatchedVideos.filter(video => video.selected).length;
+  const hasVideos = unwatchedVideos.length > 0;
+
   const handleSelectAll = () => {
     const newSelectedState = !isAllSelected;
     setIsAllSelected(newSelectedState);
     // If deselecting, pass empty array to clear all selections
-    onSelectAll(newSelectedState ? videos.map(video => video.id) : []);
+    onSelectAll(newSelectedState ? unwatchedVideos.map(video => video.id) : []);
   };
 
   const handleToggleSelect = (videoId: string) => {
@@ -53,7 +59,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   // Sort videos based on selected option
   const sortedVideos = useMemo(() => {
-    const videosCopy = [...videos];
+    const videosCopy = [...unwatchedVideos];
     switch (sortBy) {
       case 'newest':
         return videosCopy.sort((a, b) => 
@@ -74,7 +80,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       default:
         return videosCopy;
     }
-  }, [videos, sortBy]);
+  }, [unwatchedVideos, sortBy]);
 
   const handleSortChange = (option: SortOption) => {
     setSortBy(option);
@@ -137,7 +143,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <h2 className="text-xl font-semibold">
-            {videos.length} {videos.length === 1 ? 'Video' : 'Videos'}
+            {unwatchedVideos.length} {unwatchedVideos.length === 1 ? 'Video' : 'Videos'}
           </h2>
           <button
             onClick={handleSelectAll}
@@ -231,7 +237,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           <VideoCard
             key={video.id}
             video={video}
-            isWatched={watchedVideoIds.has(video.id)}
+            isWatched={false}
             onToggleSelect={handleToggleSelect}
             onMarkAsWatched={onMarkAsWatched}
           />
@@ -248,7 +254,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       </div>
 
       {/* No more videos message */}
-      {!hasMoreVideos && videos.length > 0 && (
+      {!hasMoreVideos && unwatchedVideos.length > 0 && (
         <div className="text-center py-4 text-gray-500">
           No more videos to load
         </div>

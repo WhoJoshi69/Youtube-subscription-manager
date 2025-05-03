@@ -7,9 +7,11 @@ import {
   removeSubscription,
   getFilteredChannels,
   updateFilteredChannels,
-  addToWatchHistory
+  addToWatchHistory,
+  getWatchHistory,
+  addToWatchHistoryBatch
 } from '../lib/db';
-import { isVideoWatched, addToLocalWatchHistory } from '../utils/watchHistoryStorage';
+import { isVideoWatched, addToLocalWatchHistory, getLocalWatchHistory } from '../utils/watchHistoryStorage';
 
 export const useSubscriptions = () => {
   const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>([]);
@@ -42,6 +44,18 @@ export const useSubscriptions = () => {
     loadData();
   }, []);
 
+  // Add a new effect to refresh videos when watch history changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'youtube_watch_history') {
+        fetchSubscriptionVideos();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const fetchSubscriptionVideos = async () => {
     if (subscribedChannels.length === 0) {
       setVideos([]);
@@ -61,7 +75,6 @@ export const useSubscriptions = () => {
 
       for (const channel of activeChannels) {
         try {
-          // Fetch all videos at once without pagination
           const result = await fetchChannelUploads(channel.id);
           newVideos.push(...result.videos);
         } catch (err) {
@@ -74,12 +87,24 @@ export const useSubscriptions = () => {
         throw new Error('Failed to fetch videos from any channel');
       }
 
-      // Filter for videos after April 20, 2025
+      // Get both local and database watch history
+      const [localHistory, dbHistory] = await Promise.all([
+        getLocalWatchHistory(),
+        getWatchHistory()
+      ]);
+
+      // Combine watch history IDs for more accurate filtering
+      const watchedVideoIds = new Set([
+        ...localHistory.map(v => v.id),
+        ...dbHistory.map(v => v.id)
+      ]);
+
+      // Filter for videos after April 20, 2025 and not watched
       const cutoffDate = new Date('2025-04-20T00:00:00Z');
-      
-      // Filter out watched videos and videos before the cutoff date
       const filteredVideos = newVideos.filter(
-        video => !isVideoWatched(video.id) && new Date(video.publishedAt) >= cutoffDate
+        video => 
+          !watchedVideoIds.has(video.id) && 
+          new Date(video.publishedAt) >= cutoffDate
       );
 
       // Sort by date
@@ -87,7 +112,6 @@ export const useSubscriptions = () => {
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
 
-      // Update videos state
       setVideos(sortedVideos);
     } catch (err) {
       setError('Failed to fetch subscription videos');
@@ -170,16 +194,31 @@ export const useSubscriptions = () => {
     );
   };
 
-  const markAsWatched = async () => {
-    const selectedVideos = videos.filter(video => video.selected);
-    
+  const markAsWatched = async (videoId?: string) => {
     try {
-      for (const video of selectedVideos) {
-        await addToWatchHistory({ ...video, selected: false, watched: true });
-        addToLocalWatchHistory({ ...video, watched: true });
+      let videosToMark;
+      if (videoId) {
+        // Single video case
+        videosToMark = videos.filter(video => video.id === videoId);
+      } else {
+        // Multiple selected videos case
+        videosToMark = videos.filter(video => video.selected);
       }
       
-      setVideos(prevVideos => prevVideos.filter(video => !video.selected));
+      // Update local storage immediately for instant UI feedback
+      videosToMark.forEach(video => {
+        addToLocalWatchHistory({ ...video, selected: false, watched: true });
+      });
+      
+      // Update database in a single batch operation
+      await addToWatchHistoryBatch(
+        videosToMark.map(video => ({ ...video, selected: false, watched: true }))
+      );
+      
+      // Remove watched videos from the list
+      setVideos(prevVideos => 
+        prevVideos.filter(video => !videosToMark.some(v => v.id === video.id))
+      );
     } catch (err) {
       console.error('Error marking videos as watched:', err);
       setError('Failed to mark videos as watched');
