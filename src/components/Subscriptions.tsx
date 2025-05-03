@@ -25,10 +25,8 @@ const Subscriptions: React.FC = () => {
 
   const handleVideoWatched = async (videoId: string) => {
     try {
-      // Pass the videoId to mark as watched
+      // Just mark as watched, no need to refresh
       await markAsWatched(videoId);
-      // Refresh videos list
-      await refreshVideos();
     } catch (error) {
       console.error('Error marking video as watched:', error);
     }

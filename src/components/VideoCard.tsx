@@ -56,14 +56,20 @@ const VideoCard: React.FC<VideoCardProps> = ({
     setIsVanishing(true);
     setTimeout(() => {
       onMarkAsWatched?.(video.id);
-    }, 300);
+    }, 200);
   };
 
   return (
     <div 
       className={`group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm 
-                  transition-all duration-300 transform
+                  transition-all duration-200 transform
                   ${isVanishing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
+      style={{
+        gridColumn: isVanishing ? 'span 1' : 'auto',
+        minHeight: isVanishing ? '0' : 'auto',
+        margin: isVanishing ? '0' : undefined,
+        padding: isVanishing ? '0' : undefined,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

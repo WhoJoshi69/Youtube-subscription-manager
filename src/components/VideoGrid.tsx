@@ -232,14 +232,14 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       )}
 
       {/* Video Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all duration-300">
         {sortedVideos.map(video => (
           <VideoCard
             key={video.id}
             video={video}
-            isWatched={false}
             onToggleSelect={handleToggleSelect}
             onMarkAsWatched={onMarkAsWatched}
+            showChannelNames={showChannelNames}
           />
         ))}
       </div>
