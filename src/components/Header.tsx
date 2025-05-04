@@ -21,11 +21,10 @@ const Header: React.FC<HeaderProps> = ({
           {/* Logo and Brand */}
           <div className="flex items-center">
             <div className="p-2 rounded-xl bg-red-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
-              <Youtube size={28} className="text-red-600" />
+              <i className="fi fi-sr-world text-2xl text-red-600"></i>
             </div>
-            <button className="button ml-2 hidden sm:block">
-              <span className="actual-text">&nbsp;WhoJoshi&nbsp;</span>
-              <span aria-hidden="true" className="hover-text">&nbsp;WhoJoshi&nbsp;</span>
+            <button className="px-6 py-2 bg-black text-white rounded-lg font-bold transform hover:-translate-y-1 transition duration-400 ml-2 hidden sm:block">
+              WhoJoshi
             </button>
           </div>
 
