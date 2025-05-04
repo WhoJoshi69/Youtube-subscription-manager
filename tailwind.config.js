@@ -34,7 +34,12 @@ module.exports = {
         'slide-in': 'slide-in 0.3s ease-out',
         'fade-in': 'fade-in 0.3s ease-in-out',
         'vanish-puff': 'vanish-puff 300ms ease-out forwards',
-        'scale-fade': 'scale-fade 300ms ease-out forwards'
+        'scale-fade': 'scale-fade 300ms ease-out forwards',
+        'first': 'moveVertical 30s ease infinite',
+        'second': 'moveInCircle 20s reverse infinite',
+        'third': 'moveInCircle 40s linear infinite',
+        'fourth': 'moveHorizontal 40s ease infinite',
+        'fifth': 'moveInCircle 20s ease infinite',
       },
       keyframes: {
         'slide-in': {
@@ -64,7 +69,22 @@ module.exports = {
             transform: 'scale(0.95)',
             opacity: '0'
           }
-        }
+        },
+        moveHorizontal: {
+          '0%': { transform: 'translateX(-50%) translateY(-10%)' },
+          '50%': { transform: 'translateX(50%) translateY(10%)' },
+          '100%': { transform: 'translateX(-50%) translateY(-10%)' },
+        },
+        moveInCircle: {
+          '0%': { transform: 'rotate(0deg)' },
+          '50%': { transform: 'rotate(180deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        moveVertical: {
+          '0%': { transform: 'translateY(-50%)' },
+          '50%': { transform: 'translateY(50%)' },
+          '100%': { transform: 'translateY(-50%)' },
+        },
       },
       borderRadius: {
         '2xl': '1rem', // You can adjust this value to make corners more or less rounded

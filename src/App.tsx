@@ -12,6 +12,7 @@ import { migrateWatchHistory } from './utils/migrateHistory';
 import Header from './components/Header';
 import './styles/logo.css';
 import Trending from './components/Trending';
+import { GradientLayout } from './components/Layout/GradientLayout';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
 
@@ -137,60 +138,66 @@ function App() {
   const tmdbApiKey = import.meta.env.VITE_TMDB_API_KEY;
 
   if (!session) {
-    return <Auth />;
+    return (
+      <GradientLayout>
+        <Auth />
+      </GradientLayout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-black dark:to-gray-900 text-gray-900 dark:text-white">
-      <Header
-        darkMode={darkMode}
-        onThemeToggle={toggleTheme}
-        activeSection={activeSection}
-        onSectionChange={handleSectionChange}
-        isPartialLoading={isPartialLoading}
-        onPartialLoadingToggle={togglePartialLoading}
-      />
-      
-      <div className="container mx-auto px-4 sm:px-6 py-6">
-        <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
-          {activeSection === 'playlist' ? (
-            <>
-              <PlaylistFetcher
-                onFetchPlaylist={(url) => fetchPlaylist(url, true)}
-                isLoading={isLoading}
-                error={error}
-              />
-              <VideoGrid
-                videos={videos}
+    <GradientLayout>
+      <div className="min-h-screen">
+        <Header
+          darkMode={darkMode}
+          onThemeToggle={toggleTheme}
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          isPartialLoading={isPartialLoading}
+          onPartialLoadingToggle={togglePartialLoading}
+        />
+        
+        <div className="container mx-auto px-4 sm:px-6 py-6">
+          <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+            {activeSection === 'playlist' ? (
+              <>
+                <PlaylistFetcher
+                  onFetchPlaylist={(url) => fetchPlaylist(url, true)}
+                  isLoading={isLoading}
+                  error={error}
+                />
+                <VideoGrid
+                  videos={videos}
+                  onToggleSelect={toggleSelect}
+                  onSelectAll={handleSelectAll}
+                  onMarkAsWatched={markAsWatched}
+                  isLoading={isLoading}
+                  isLoadingMore={isLoadingMore}
+                  hasMoreVideos={hasMoreVideos}
+                  onLoadMore={loadMoreVideos}
+                />
+              </>
+            ) : activeSection === 'subscriptions' ? (
+              <Subscriptions />
+            ) : activeSection === 'trending' ? (
+              <Trending apiKey={tmdbApiKey} />
+            ) : (
+              <History
+                watchedVideos={watchedVideos}
                 onToggleSelect={toggleSelect}
                 onSelectAll={handleSelectAll}
-                onMarkAsWatched={markAsWatched}
+                onRemoveFromHistory={handleRemoveFromHistory}
                 isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasMoreVideos={hasMoreVideos}
-                onLoadMore={loadMoreVideos}
               />
-            </>
-          ) : activeSection === 'subscriptions' ? (
-            <Subscriptions />
-          ) : activeSection === 'trending' ? (
-            <Trending apiKey={tmdbApiKey} />
-          ) : (
-            <History
-              watchedVideos={watchedVideos}
-              onToggleSelect={toggleSelect}
-              onSelectAll={handleSelectAll}
-              onRemoveFromHistory={handleRemoveFromHistory}
-              isLoading={isLoading}
-            />
-          )}
-        </main>
+            )}
+          </main>
 
-        <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>© 2024 WhoJoshi Subscription Manager</p>
-        </footer>
+          <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>© 2024 WhoJoshi Subscription Manager</p>
+          </footer>
+        </div>
       </div>
-    </div>
+    </GradientLayout>
   );
 }
 
