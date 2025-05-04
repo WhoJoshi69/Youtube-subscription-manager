@@ -163,4 +163,19 @@ export async function updateFilteredChannels(channelIds: string[]) {
       throw error;
     }
   }
+}
+
+export async function checkWatchedStatus(videoIds: string[]) {
+  const { data, error } = await supabase
+    .from('watch_history')
+    .select('id')
+    .in('id', videoIds);
+
+  if (error) {
+    console.error('Error checking watched status:', error);
+    throw error;
+  }
+
+  // Return a Set of watched video IDs for O(1) lookup
+  return new Set(data.map(video => video.id));
 } 

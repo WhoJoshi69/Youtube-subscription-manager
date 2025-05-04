@@ -9,7 +9,8 @@ import {
   updateFilteredChannels,
   addToWatchHistory,
   getWatchHistory,
-  addToWatchHistoryBatch
+  addToWatchHistoryBatch,
+  checkWatchedStatus
 } from '../lib/db';
 import { isVideoWatched, addToLocalWatchHistory, getLocalWatchHistory } from '../utils/watchHistoryStorage';
 
@@ -73,6 +74,7 @@ export const useSubscriptions = () => {
       const newVideos: Video[] = [];
       let hasErrors = false;
 
+      // Fetch videos from all channels
       for (const channel of activeChannels) {
         try {
           const result = await fetchChannelUploads(channel.id);
@@ -87,24 +89,28 @@ export const useSubscriptions = () => {
         throw new Error('Failed to fetch videos from any channel');
       }
 
-      // Get both local and database watch history
-      const [localHistory, dbHistory] = await Promise.all([
-        getLocalWatchHistory(),
-        getWatchHistory()
-      ]);
+      // Get local watch history
+      const localHistory = getLocalWatchHistory();
+      const localWatchedIds = new Set(localHistory.map(v => v.id));
 
-      // Combine watch history IDs for more accurate filtering
-      const watchedVideoIds = new Set([
-        ...localHistory.map(v => v.id),
-        ...dbHistory.map(v => v.id)
-      ]);
+      // Filter out videos watched in local storage first
+      let unwatchedVideos = newVideos.filter(video => !localWatchedIds.has(video.id));
 
-      // Filter for videos after April 20, 2025 and not watched
+      // Check remaining videos against database in batches of 100
+      const batchSize = 100;
+      const finalUnwatchedVideos: Video[] = [];
+
+      for (let i = 0; i < unwatchedVideos.length; i += batchSize) {
+        const batch = unwatchedVideos.slice(i, i + batchSize);
+        const watchedIds = await checkWatchedStatus(batch.map(v => v.id));
+        const unwatchedBatch = batch.filter(video => !watchedIds.has(video.id));
+        finalUnwatchedVideos.push(...unwatchedBatch);
+      }
+
+      // Filter for videos after April 20, 2025
       const cutoffDate = new Date('2025-04-20T00:00:00Z');
-      const filteredVideos = newVideos.filter(
-        video => 
-          !watchedVideoIds.has(video.id) && 
-          new Date(video.publishedAt) >= cutoffDate
+      const filteredVideos = finalUnwatchedVideos.filter(
+        video => new Date(video.publishedAt) >= cutoffDate
       );
 
       // Sort by date
