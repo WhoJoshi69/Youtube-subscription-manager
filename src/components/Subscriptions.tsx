@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import VideoGrid from './VideoGrid';
 import { Channel } from '../types';
@@ -22,6 +22,11 @@ const Subscriptions: React.FC = () => {
   } = useSubscriptions();
 
   const [showFilters, setShowFilters] = useState(false);
+
+  // Add effect to fetch videos on mount
+  useEffect(() => {
+    refreshVideos();
+  }, []); // Empty dependency array means this runs once on mount
 
   const handleVideoWatched = async (videoId: string) => {
     try {

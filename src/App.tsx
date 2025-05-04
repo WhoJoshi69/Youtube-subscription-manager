@@ -47,8 +47,20 @@ function App() {
   // Update URL when section changes
   const handleSectionChange = (section: Section) => {
     setActiveSection(section);
-    // Update the URL without full page reload
-    window.history.pushState({}, '', `/${section}`);
+    
+    // Clear any existing errors when switching sections
+    setError(null);
+    
+    // If switching to subscriptions, trigger a refresh
+    if (section === 'subscriptions') {
+      // We'll add a small delay to ensure the component is mounted
+      setTimeout(() => {
+        const event = new StorageEvent('storage', {
+          key: 'youtube_watch_history'
+        });
+        window.dispatchEvent(event);
+      }, 100);
+    }
   };
 
   // Handle browser back/forward buttons
