@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MovieGrid from './MovieGrid';
 import { Video } from '../types';
 import { Film, Tv } from 'lucide-react';
@@ -23,13 +23,24 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // Reference to track the current active tab for cleanup
+  const currentTab = useRef(activeTab);
 
-  const fetchTrending = async (type: 'movie' | 'tv') => {
-    setIsLoading(true);
+  const fetchTrending = async (type: 'movie' | 'tv', pageNum: number, isLoadingMore = false) => {
+    if (isLoadingMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
+
     try {
       const response = await fetch(
-        `https://api.themoviedb.org/3/trending/${type}/day?api_key=${apiKey}`
+        `https://api.themoviedb.org/3/trending/${type}/day?api_key=${apiKey}&page=${pageNum}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch trending content');
@@ -49,18 +60,60 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         rating: item.vote_average
       }));
 
-      setVideos(convertedVideos);
+      // Update hasMore based on TMDB's total_pages
+      setHasMore(pageNum < data.total_pages);
+
+      // If loading more, append to existing videos
+      // If new search (page 1), replace existing videos
+      setVideos(prev => 
+        isLoadingMore ? [...prev, ...convertedVideos] : convertedVideos
+      );
     } catch (err) {
       setError('Failed to fetch trending content');
       console.error('Error fetching trending content:', err);
     } finally {
-      setIsLoading(false);
+      if (isLoadingMore) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
+  // Intersection Observer callback
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastVideoElementRef = useCallback((node: HTMLDivElement) => {
+    if (isLoading || isLoadingMore) return;
+    
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [isLoading, isLoadingMore, hasMore]);
+
+  // Effect for tab changes
   useEffect(() => {
-    fetchTrending(activeTab === 'movies' ? 'movie' : 'tv');
+    currentTab.current = activeTab;
+    setPage(1);
+    setVideos([]);
+    setHasMore(true);
+    fetchTrending(activeTab === 'movies' ? 'movie' : 'tv', 1);
   }, [activeTab, apiKey]);
+
+  // Effect for page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchTrending(
+        activeTab === 'movies' ? 'movie' : 'tv',
+        page,
+        true
+      );
+    }
+  }, [page]);
 
   return (
     <div className="w-full space-y-6">
@@ -96,7 +149,12 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         <div className="text-red-500 text-sm">{error}</div>
       )}
 
-      <MovieGrid videos={videos} isLoading={isLoading} />
+      <MovieGrid 
+        videos={videos} 
+        isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
+        lastVideoElementRef={lastVideoElementRef}
+      />
     </div>
   );
 };

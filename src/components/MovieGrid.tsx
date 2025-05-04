@@ -5,17 +5,28 @@ import { Star } from 'lucide-react';
 interface MovieGridProps {
   videos: Video[];
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  lastVideoElementRef?: (node: HTMLDivElement) => void;
 }
 
-const MovieGrid: React.FC<MovieGridProps> = ({ videos, isLoading }) => {
+const MovieGrid: React.FC<MovieGridProps> = ({ 
+  videos, 
+  isLoading, 
+  isLoadingMore, 
+  lastVideoElementRef 
+}) => {
+  const LoadingSkeleton = () => (
+    <div className="animate-pulse">
+      <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mt-2 w-3/4"></div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {[...Array(12)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mt-2 w-3/4"></div>
-          </div>
+          <LoadingSkeleton key={i} />
         ))}
       </div>
     );
@@ -23,9 +34,10 @@ const MovieGrid: React.FC<MovieGridProps> = ({ videos, isLoading }) => {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-      {videos.map((video) => (
+      {videos.map((video, index) => (
         <div
           key={video.id}
+          ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
           className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
         >
           {/* Poster Image */}
@@ -59,6 +71,15 @@ const MovieGrid: React.FC<MovieGridProps> = ({ videos, isLoading }) => {
           </div>
         </div>
       ))}
+
+      {/* Loading more indicator */}
+      {isLoadingMore && (
+        <>
+          {[...Array(6)].map((_, i) => (
+            <LoadingSkeleton key={`loading-more-${i}`} />
+          ))}
+        </>
+      )}
     </div>
   );
 };
