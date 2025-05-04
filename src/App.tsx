@@ -28,7 +28,8 @@ function App() {
     markAsWatched,
     setWatchedVideos,
     isPartialLoading,
-    setIsPartialLoading
+    setIsPartialLoading,
+    currentPlaylistUrl
   } = usePlaylist();
 
   const [darkMode, setDarkMode] = useState(true);
@@ -100,6 +101,14 @@ function App() {
 
   const togglePartialLoading = () => {
     setIsPartialLoading(!isPartialLoading);
+    
+    // If we have a current playlist URL, refresh the playlist with the new setting
+    if (currentPlaylistUrl) {
+      // Small delay to ensure the state has updated
+      setTimeout(() => {
+        fetchPlaylist(currentPlaylistUrl, true);
+      }, 50);
+    }
   };
 
   const handleRemoveFromHistory = (videoIds: string[]) => {

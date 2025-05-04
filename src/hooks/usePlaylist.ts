@@ -135,6 +135,7 @@ export const usePlaylist = () => {
     handleSelectAll,
     markAsWatched,
     isPartialLoading,
-    setIsPartialLoading
+    setIsPartialLoading,
+    currentPlaylistUrl
   };
 };
