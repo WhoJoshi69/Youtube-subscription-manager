@@ -22,7 +22,8 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     </div>
   );
 
-  if (isLoading) {
+  // Show loading skeletons only for initial load
+  if (isLoading && videos.length === 0) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {[...Array(12)].map((_, i) => (
@@ -34,6 +35,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {/* Render existing videos */}
       {videos.map((video, index) => (
         <div
           key={video.id}
@@ -72,7 +74,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
         </div>
       ))}
 
-      {/* Loading more indicator */}
+      {/* Show loading skeletons at the bottom when loading more */}
       {isLoadingMore && (
         <>
           {[...Array(6)].map((_, i) => (

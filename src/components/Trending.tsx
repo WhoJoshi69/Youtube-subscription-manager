@@ -191,6 +191,13 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, activeTab]);
 
+  // Add this new effect to handle page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchContent(activeTab === 'movies' ? 'movie' : 'tv', page, true);
+    }
+  }, [page]); // This effect will run whenever page changes
+
   const placeholders = [
     "Search movies & TV shows...",
     "Find your next favorite...",
