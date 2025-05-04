@@ -71,21 +71,21 @@ export const useSubscriptions = () => {
         channel => !filteredChannels.includes(channel.id)
       );
 
-      const newVideos: Video[] = [];
-      let hasErrors = false;
+      // Fetch videos from all channels concurrently
+      const channelFetchPromises = activeChannels.map(channel => 
+        fetchChannelUploads(channel.id)
+          .catch(err => {
+            console.error(`Error fetching videos for channel ${channel.title}:`, err);
+            return { videos: [], nextPageToken: undefined };
+          })
+      );
 
-      // Fetch videos from all channels
-      for (const channel of activeChannels) {
-        try {
-          const result = await fetchChannelUploads(channel.id);
-          newVideos.push(...result.videos);
-        } catch (err) {
-          console.error(`Error fetching videos for channel ${channel.title}:`, err);
-          hasErrors = true;
-        }
-      }
+      const results = await Promise.all(channelFetchPromises);
+      
+      // Combine all videos from all channels
+      const newVideos = results.flatMap(result => result.videos);
 
-      if (hasErrors && newVideos.length === 0) {
+      if (newVideos.length === 0) {
         throw new Error('Failed to fetch videos from any channel');
       }
 
