@@ -79,7 +79,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for a YouTube channel..."
-              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800"
+              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
               disabled={searching || isLoading}
             />
           </div>
@@ -109,7 +109,7 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
 
       {searchResults.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold mb-3">Search Results:</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Search Results:</h3>
           <div className="grid gap-4">
             {searchResults.map((channel) => {
               const isSubscribed = subscribedChannels.some(c => c.id === channel.id);

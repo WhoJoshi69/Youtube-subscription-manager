@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
               {darkMode ? (
                 <Sun size={20} className="text-gray-700 dark:text-gray-300" />
               ) : (
-                <Moon size={20} className="text-gray-700" />
+                <Moon size={20} className="text-gray-700 dark:text-gray-300" />
               )}
             </button>
 

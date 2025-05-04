@@ -94,5 +94,29 @@ module.exports = {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addBase, theme }) {
+      addBase({
+        '.dark': {
+          color: theme('colors.white'),
+        },
+        '.dark input::placeholder': {
+          color: theme('colors.gray.400'),
+        },
+        '.dark button': {
+          color: theme('colors.white'),
+        },
+        // Exceptions for text that should not be white
+        '.dark .text-red-600': {
+          color: theme('colors.red.600'),
+        },
+        '.dark .text-gray-400': {
+          color: theme('colors.gray.400'),
+        },
+        '.dark .text-gray-500': {
+          color: theme('colors.gray.500'),
+        },
+      });
+    },
+  ],
 };

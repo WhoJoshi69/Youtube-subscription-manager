@@ -40,7 +40,7 @@ const Subscriptions: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Subscriptions</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Subscriptions</h2>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-lg text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-2">
             <Calendar size={16} />
@@ -71,11 +71,11 @@ const Subscriptions: React.FC = () => {
       {showFilters && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Filter Channels</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Filter Channels</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={showAllChannels}
-                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-gray-900 dark:text-white"
                 title="Show all channels"
               >
                 <Eye size={16} />
@@ -83,7 +83,7 @@ const Subscriptions: React.FC = () => {
               </button>
               <button
                 onClick={hideAllChannels}
-                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 text-gray-900 dark:text-white"
                 title="Hide all channels"
               >
                 <EyeOff size={16} />
@@ -150,7 +150,7 @@ const ChannelFilterItem: React.FC<{
       className="w-10 h-10 rounded-full"
     />
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium truncate" title={channel.title}>
+      <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={channel.title}>
         {channel.title}
       </p>
     </div>

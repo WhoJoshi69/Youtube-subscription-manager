@@ -142,12 +142,12 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {unwatchedVideos.length} {unwatchedVideos.length === 1 ? 'Video' : 'Videos'}
           </h2>
           <button
             onClick={handleSelectAll}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
           >
             {isAllSelected ? (
               <CheckSquare size={16} className="text-red-600" />
@@ -178,7 +178,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
             <Filter size={16} />
-            <span>Sort by: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
+            <span className="text-gray-700 dark:text-gray-300">Sort by: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
           </button>
         </div>
 

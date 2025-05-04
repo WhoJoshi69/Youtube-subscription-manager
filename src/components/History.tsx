@@ -166,7 +166,7 @@ const History: React.FC = () => {
       {showFilters && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Filters</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Filters</h3>
             <button
               onClick={() => setShowFilters(false)}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
@@ -182,14 +182,14 @@ const History: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in history..."
-              className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+              className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
 
           {/* Time Range Filter */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Time Range</h4>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">Time Range</h4>
             <div className="flex flex-wrap gap-2">
               {(['all', 'today', 'week', 'month'] as FilterTimeRange[]).map((range) => (
                 <button
@@ -198,7 +198,7 @@ const History: React.FC = () => {
                   className={`px-3 py-1 rounded-full text-sm ${
                     timeRange === range
                       ? 'bg-red-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
                   }`}
                 >
                   {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -209,7 +209,7 @@ const History: React.FC = () => {
 
           {/* Channel Filter */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Channels</h4>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">Channels</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {channels.map(({ title, count }) => (
                 <button
