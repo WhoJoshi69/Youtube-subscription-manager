@@ -4,6 +4,7 @@ import { searchYouTubeChannel } from '../api/youtube';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import Loader from './Loader';
+import { SearchInput } from './ui/SearchInput';
 
 interface ChannelSearchProps {
   onFetchPlaylist: (url: string) => Promise<void>;
@@ -29,16 +30,16 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [markingWatched, setMarkingWatched] = useState<string | null>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>, value: string) => {
+    if (!value.trim()) return;
 
     setSearching(true);
     setSearchError(null);
     setSearchResults([]);
+    setSearchQuery(value);
 
     try {
-      const results = await searchYouTubeChannel(searchQuery);
+      const results = await searchYouTubeChannel(value);
       setSearchResults(results);
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : 'Failed to search channels');
@@ -48,7 +49,6 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
   };
 
   const handleChannelSelect = async (channelId: string) => {
-    // Get the uploads playlist ID (it's the channel ID with UC replaced by UU)
     const uploadsPlaylistId = channelId.replace('UC', 'UU');
     const playlistUrl = `https://www.youtube.com/playlist?list=${uploadsPlaylistId}`;
     await onFetchPlaylist(playlistUrl);
@@ -59,7 +59,6 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
     setMarkingWatched(channelId);
     try {
       await markChannelAsWatched(channelId);
-      // Show success indicator temporarily
       setTimeout(() => {
         setMarkingWatched(null);
       }, 2000);
@@ -69,43 +68,26 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
     }
   };
 
+  const placeholders = [
+    "Search for a YouTube channel...",
+    "Enter channel name...",
+    "Find your favorite creators...",
+    "Discover new channels...",
+    "Search by channel name..."
+  ];
+
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a YouTube channel..."
-              className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-              disabled={searching || isLoading}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={searching || isLoading || !searchQuery.trim()}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {searching ? (
-              <>
-                <Loader size="sm" light />
-                <span>Searching...</span>
-              </>
-            ) : (
-              <>
-                <Search size={18} />
-                <span>Search Channel</span>
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-
-      {searchError && (
-        <div className="mb-4 text-red-500 text-sm">{searchError}</div>
-      )}
+      <div className="mb-6">
+        <SearchInput
+          placeholders={placeholders}
+          onSubmit={handleSearch}
+          className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
+        />
+        {searchError && (
+          <div className="mt-4 text-red-500 text-sm text-center">{searchError}</div>
+        )}
+      </div>
 
       {searchResults.length > 0 && (
         <div className="space-y-4">
@@ -133,55 +115,54 @@ const ChannelSearch: React.FC<ChannelSearchProps> = ({
                       {channel.subscriberCount} subscribers
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleMarkChannelWatched(channel.id)}
-                      disabled={isMarking}
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        isMarking 
-                          ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      {isMarking ? (
-                        <>
-                          <CheckCircle size={16} className="mr-2 inline" />
-                          <span>Marked Watched</span>
-                        </>
-                      ) : (
-                        'Mark Watched'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => isSubscribed 
-                        ? unsubscribeFromChannel(channel.id)
-                        : subscribeToChannel(channel)
-                      }
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        isSubscribed
-                          ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
-                          : 'bg-red-600 hover:bg-red-700 text-white'
-                      }`}
-                    >
-                      {isSubscribed ? 'Unsubscribe' : 'Subscribe'}
-                    </button>
-                    <button
-                      onClick={() => handleChannelSelect(channel.id)}
-                      disabled={isLoading}
-                      className={`px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center gap-2 ${
-                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader size="sm" />
-                          <span>Loading...</span>
-                        </>
-                      ) : (
-                        'View Videos'
-                      )}
-                    </button>
-                  </div>
+                  
+                  <button
+                    onClick={() => handleMarkChannelWatched(channel.id)}
+                    disabled={isMarking}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      isMarking 
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {isMarking ? (
+                      <>
+                        <CheckCircle size={16} className="mr-2 inline" />
+                        <span>Marked Watched</span>
+                      </>
+                    ) : (
+                      'Mark Watched'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => isSubscribed 
+                      ? unsubscribeFromChannel(channel.id)
+                      : subscribeToChannel(channel)
+                    }
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      isSubscribed
+                        ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
+                  >
+                    {isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+                  </button>
+                  <button
+                    onClick={() => handleChannelSelect(channel.id)}
+                    disabled={isLoading}
+                    className={`px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center gap-2 ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader size="sm" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      'View Videos'
+                    )}
+                  </button>
                 </div>
               );
             })}

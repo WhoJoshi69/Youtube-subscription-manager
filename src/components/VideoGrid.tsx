@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import Loader from './Loader';
+import { VideoSearch } from './VideoSearch';
 
 type SortOption = 'newest' | 'oldest' | 'title' | 'views';
 
@@ -34,6 +35,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const { watchedVideos } = useWatchHistory();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Create a Set of watched video IDs for O(1) lookup
   const watchedVideoIds = new Set(watchedVideos.map(v => v.id));
@@ -113,6 +115,16 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       }
     };
   }, [handleObserver]);
+
+  const filteredVideos = useMemo(() => {
+    if (!searchQuery.trim()) return videos;
+    
+    const query = searchQuery.toLowerCase();
+    return videos.filter(video => 
+      video.title.toLowerCase().includes(query) ||
+      video.description?.toLowerCase().includes(query)
+    );
+  }, [videos, searchQuery]);
 
   if (isLoading) {
     return (
@@ -231,9 +243,13 @@ const VideoGrid: React.FC<VideoGridProps> = ({
         </div>
       )}
 
+      {videos.length > 0 && (
+        <VideoSearch onSearch={setSearchQuery} />
+      )}
+
       {/* Video Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all duration-300">
-        {sortedVideos.map(video => (
+        {filteredVideos.map(video => (
           <VideoCard
             key={video.id}
             video={video}
