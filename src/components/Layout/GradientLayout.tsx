@@ -29,6 +29,7 @@ export function GradientLayout({ children, darkMode = true }: GradientLayoutProp
     <BackgroundGradientAnimation
       {...colors}
       pointerColor="140, 100, 255"
+      className="min-h-screen"
     >
       {children}
     </BackgroundGradientAnimation>
