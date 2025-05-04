@@ -85,6 +85,10 @@ export async function addToWatchHistory(video: Video) {
     ]);
 
   if (error) {
+    // Ignore duplicate key violations (error code 23505)
+    if (error.code === '23505') {
+      return;
+    }
     console.error('Error adding to watch history:', error);
     throw error;
   }
@@ -118,6 +122,10 @@ export async function addToWatchHistoryBatch(videos: Video[]) {
     );
 
   if (error) {
+    // Ignore duplicate key violations (error code 23505)
+    if (error.code === '23505') {
+      return;
+    }
     console.error('Error adding to watch history:', error);
     throw error;
   }
