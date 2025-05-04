@@ -13,6 +13,7 @@ import Header from './components/Header';
 import './styles/logo.css';
 import Trending from './components/Trending';
 import { GradientLayout } from './components/Layout/GradientLayout';
+import { Navigation } from './components/Navigation';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
 
@@ -196,6 +197,11 @@ function App() {
             <p>© 2024 WhoJoshi Subscription Manager</p>
           </footer>
         </div>
+
+        <Navigation 
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+        />
       </div>
     </GradientLayout>
   );
