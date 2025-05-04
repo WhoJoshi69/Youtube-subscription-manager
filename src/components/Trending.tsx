@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MovieGrid from './MovieGrid';
 import { Video } from '../types';
-import { Film, Tv, Filter, SortDesc, Calendar, Star } from 'lucide-react';
+import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X } from 'lucide-react';
+import { SearchInput } from './ui/SearchInput';
 
 interface FilterState {
   sortBy: string;
@@ -48,6 +49,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     sortBy: 'popularity.desc',
   });
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
@@ -65,7 +68,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     }
   };
 
-  const fetchTrending = async (type: 'movie' | 'tv', pageNum: number, isLoadingMore = false) => {
+  const fetchContent = async (type: 'movie' | 'tv', pageNum: number, isLoadingMore = false) => {
     if (isLoadingMore) {
       setIsLoadingMore(true);
     } else {
@@ -74,25 +77,38 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     setError(null);
 
     try {
-      // Construct URL with filters
-      const url = new URL(`https://api.themoviedb.org/3/discover/${type}`);
-      url.searchParams.append('api_key', apiKey);
-      url.searchParams.append('page', pageNum.toString());
-      
-      // Add filters to URL
-      if (filters.sortBy) url.searchParams.append('sort_by', filters.sortBy);
-      if (filters.year) url.searchParams.append('year', filters.year.toString());
-      if (filters.voteAverage) url.searchParams.append('vote_average.gte', filters.voteAverage.toString());
-      if (filters.withGenres?.length) url.searchParams.append('with_genres', filters.withGenres.join(','));
-      if (filters.releaseDateGte) url.searchParams.append('release_date.gte', filters.releaseDateGte);
-      if (filters.releaseDateLte) url.searchParams.append('release_date.lte', filters.releaseDateLte);
-      if (filters.voteCountGte) url.searchParams.append('vote_count.gte', filters.voteCountGte.toString());
-      if (filters.language) url.searchParams.append('language', filters.language);
-      if (filters.region) url.searchParams.append('region', filters.region);
+      // Build the base URL based on whether we're searching or getting trending
+      const baseUrl = searchQuery
+        ? `https://api.themoviedb.org/3/search/${type}`
+        : `https://api.themoviedb.org/3/trending/${type}/day`;
 
-      const response = await fetch(url.toString());
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        api_key: apiKey,
+        page: pageNum.toString(),
+      });
+
+      // Add search query if searching
+      if (searchQuery) {
+        queryParams.append('query', searchQuery);
+      }
+
+      // Add filters to query parameters
+      if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
+      if (filters.voteAverage) queryParams.append('vote_average.gte', filters.voteAverage.toString());
+      if (filters.withGenres?.length) queryParams.append('with_genres', filters.withGenres.join(','));
+      if (filters.releaseDateGte) queryParams.append('release_date.gte', filters.releaseDateGte);
+      if (filters.releaseDateLte) queryParams.append('release_date.lte', filters.releaseDateLte);
+      if (filters.voteCountGte) queryParams.append('vote_count.gte', filters.voteCountGte.toString());
+      if (filters.language) queryParams.append('language', filters.language);
+      if (filters.region) queryParams.append('region', filters.region);
+
+      const response = await fetch(
+        `${baseUrl}?${queryParams.toString()}`
+      );
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch trending content');
+        throw new Error('Failed to fetch content');
       }
       const data = await response.json();
       
@@ -118,8 +134,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         isLoadingMore ? [...prev, ...convertedVideos] : convertedVideos
       );
     } catch (err) {
-      setError('Failed to fetch trending content');
-      console.error('Error fetching trending content:', err);
+      setError('Failed to fetch content');
+      console.error('Error fetching content:', err);
     } finally {
       if (isLoadingMore) {
         setIsLoadingMore(false);
@@ -151,25 +167,68 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     setVideos([]);
     setHasMore(true);
     fetchGenres(activeTab === 'movies' ? 'movie' : 'tv');
-    fetchTrending(activeTab === 'movies' ? 'movie' : 'tv', 1);
+    fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
   }, [activeTab, apiKey]);
 
-  // Effect for page changes
+  // Effect for search query changes
   useEffect(() => {
-    if (page > 1) {
-      fetchTrending(
-        activeTab === 'movies' ? 'movie' : 'tv',
-        page,
-        true
-      );
-    }
-  }, [page]);
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        setIsSearching(true);
+        setPage(1);
+        setVideos([]);
+        setHasMore(true);
+        fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+      } else {
+        setIsSearching(false);
+        setPage(1);
+        setVideos([]);
+        setHasMore(true);
+        fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+      }
+    }, 500); // Debounce search for 500ms
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeTab]);
+
+  const placeholders = [
+    "Search movies & TV shows...",
+    "Find your next favorite...",
+    "Discover trending content...",
+    "Search by title...",
+    "Find movies and shows..."
+  ];
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Trending</h2>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold">
+          {isSearching ? 'Search Results' : 'Trending'}
+        </h2>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Increase the width of the search container */}
+          <div className="relative flex-1 sm:flex-initial sm:w-96">
+            <SearchInput
+              placeholders={placeholders}
+              onSubmit={(e, value) => setSearchQuery(value)}
+              className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
+            />
+          </div>
+
+          {/* Filter Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2
+              ${showFilters
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+          >
+            <Filter size={16} />
+            <span className="hidden sm:inline">Filters</span>
+          </button>
+
+          {/* Movies/TV Shows Toggle */}
           <button
             onClick={() => setActiveTab('movies')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2
@@ -179,7 +238,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
               }`}
           >
             <Film size={16} />
-            <span>Movies</span>
+            <span className="hidden sm:inline">Movies</span>
           </button>
           <button
             onClick={() => setActiveTab('tvshows')}
@@ -190,18 +249,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
               }`}
           >
             <Tv size={16} />
-            <span>TV Shows</span>
-          </button>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg transition-colors ${
-              showFilters 
-                ? 'bg-gray-200 dark:bg-gray-700' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-            title="Show filters"
-          >
-            <Filter size={20} />
+            <span className="hidden sm:inline">TV Shows</span>
           </button>
         </div>
       </div>
@@ -292,7 +340,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
               setPage(1);
               setVideos([]);
               setHasMore(true);
-              fetchTrending(activeTab === 'movies' ? 'movie' : 'tv', 1);
+              fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
             }}
             className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
