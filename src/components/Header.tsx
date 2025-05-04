@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Youtube, Menu, X, Search, Moon, Sun, List, ListEnd } from 'lucide-react';
+import { Youtube, Menu, X, Search, Moon, Sun, List, ListEnd, Film } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
   onThemeToggle: () => void;
-  activeSection: 'playlist' | 'subscriptions' | 'history';
-  onSectionChange: (section: 'playlist' | 'subscriptions' | 'history') => void;
+  activeSection: 'playlist' | 'subscriptions' | 'history' | 'trending';
+  onSectionChange: (section: 'playlist' | 'subscriptions' | 'history' | 'trending') => void;
   isPartialLoading: boolean;
   onPartialLoadingToggle: () => void;
 }
@@ -23,7 +23,8 @@ const Header: React.FC<HeaderProps> = ({
   const menuItems = [
     { id: 'playlist', label: 'Playlists' },
     { id: 'subscriptions', label: 'Subscriptions' },
-    { id: 'history', label: 'History' }
+    { id: 'history', label: 'History' },
+    { id: 'trending', label: 'Trending', icon: Film }
   ];
 
   return (

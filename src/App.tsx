@@ -11,8 +11,9 @@ import { Auth } from './components/Auth';
 import { migrateWatchHistory } from './utils/migrateHistory';
 import Header from './components/Header';
 import './styles/logo.css';
+import Trending from './components/Trending';
 
-type Section = 'playlist' | 'subscriptions' | 'history';
+type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
 
 function App() {
   const {
@@ -38,10 +39,8 @@ function App() {
 
   // Initialize activeSection from URL or default to 'playlist'
   const [activeSection, setActiveSection] = useState<Section>(() => {
-    // Get the path from the URL (removing the leading slash)
     const path = window.location.pathname.substring(1);
-    // Check if it's a valid section
-    return (path === 'playlist' || path === 'subscriptions' || path === 'history') 
+    return (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending') 
       ? path as Section 
       : 'playlist';
   });
@@ -69,7 +68,7 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.substring(1);
-      if (path === 'playlist' || path === 'subscriptions' || path === 'history') {
+      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending') {
         setActiveSection(path as Section);
       } else {
         setActiveSection('playlist');
@@ -134,6 +133,9 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Remove the tmdbApiKey state since we'll use the environment variable
+  const tmdbApiKey = import.meta.env.VITE_TMDB_API_KEY;
+
   if (!session) {
     return <Auth />;
   }
@@ -171,6 +173,8 @@ function App() {
             </>
           ) : activeSection === 'subscriptions' ? (
             <Subscriptions />
+          ) : activeSection === 'trending' ? (
+            <Trending apiKey={tmdbApiKey} />
           ) : (
             <History
               watchedVideos={watchedVideos}
