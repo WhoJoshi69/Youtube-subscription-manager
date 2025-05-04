@@ -152,8 +152,6 @@ function App() {
         <Header
           darkMode={darkMode}
           onThemeToggle={toggleTheme}
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
           isPartialLoading={isPartialLoading}
           onPartialLoadingToggle={togglePartialLoading}
         />
