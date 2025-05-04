@@ -10,6 +10,7 @@ import { supabase } from './lib/supabase';
 import { Auth } from './components/Auth';
 import { migrateWatchHistory } from './utils/migrateHistory';
 import Header from './components/Header';
+import './styles/logo.css';
 
 type Section = 'playlist' | 'subscriptions' | 'history';
 

@@ -35,9 +35,10 @@ const Header: React.FC<HeaderProps> = ({
             <div className="p-2 rounded-xl bg-red-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <Youtube size={28} className="text-red-600" />
             </div>
-            <h1 className="ml-2 text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
-              WhoJoshi
-            </h1>
+            <button className="button ml-2 hidden sm:block">
+              <span className="actual-text">&nbsp;WhoJoshi&nbsp;</span>
+              <span aria-hidden="true" className="hover-text">&nbsp;WhoJoshi&nbsp;</span>
+            </button>
           </div>
 
           {/* Desktop Navigation */}
