@@ -30,9 +30,7 @@ export function GradientLayout({ children, darkMode = true }: GradientLayoutProp
       {...colors}
       pointerColor="140, 100, 255"
     >
-      <div className="relative z-10 min-h-screen w-full">
-        {children}
-      </div>
+      {children}
     </BackgroundGradientAnimation>
   );
 } 

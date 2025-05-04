@@ -89,7 +89,7 @@ export const BackgroundGradientAnimation = ({
   return (
     <div
       className={cn(
-        "h-screen w-screen relative overflow-hidden top-0 left-0 bg-[linear-gradient(40deg,var(--gradient-background-start),var(--gradient-background-end))]",
+        "fixed inset-0 min-h-screen w-full bg-[linear-gradient(40deg,var(--gradient-background-start),var(--gradient-background-end))]",
         containerClassName
       )}
     >
@@ -107,10 +107,10 @@ export const BackgroundGradientAnimation = ({
           </filter>
         </defs>
       </svg>
-      <div className={cn("", className)}>{children}</div>
+      
       <div
         className={cn(
-          "gradients-container h-full w-full blur-lg",
+          "fixed inset-0 gradients-container blur-lg",
           isSafari ? "blur-2xl" : "[filter:url(#blurMe)_blur(40px)]"
         )}
       >
@@ -159,19 +159,23 @@ export const BackgroundGradientAnimation = ({
             `opacity-100`
           )}
         ></div>
-
-        {interactive && (
-          <div
-            ref={interactiveRef}
-            onMouseMove={handleMouseMove}
-            className={cn(
-              `absolute [background:radial-gradient(circle_at_center,_rgba(var(--pointer-color),_0.8)_0,_rgba(var(--pointer-color),_0)_50%)_no-repeat]`,
-              `[mix-blend-mode:var(--blending-value)] w-full h-full -top-1/2 -left-1/2`,
-              `opacity-70`
-            )}
-          ></div>
-        )}
       </div>
+
+      <div className={cn("relative z-10 min-h-screen", className)}>
+        {children}
+      </div>
+
+      {interactive && (
+        <div
+          ref={interactiveRef}
+          onMouseMove={handleMouseMove}
+          className={cn(
+            `fixed inset-0 [background:radial-gradient(circle_at_center,_rgba(var(--pointer-color),_0.8)_0,_rgba(var(--pointer-color),_0)_50%)_no-repeat]`,
+            `[mix-blend-mode:var(--blending-value)]`,
+            `opacity-70`
+          )}
+        ></div>
+      )}
     </div>
   );
 }; 

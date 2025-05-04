@@ -139,15 +139,15 @@ function App() {
 
   if (!session) {
     return (
-      <GradientLayout>
+      <GradientLayout darkMode={darkMode}>
         <Auth />
       </GradientLayout>
     );
   }
 
   return (
-    <GradientLayout>
-      <div className="min-h-screen">
+    <GradientLayout darkMode={darkMode}>
+      <div>
         <Header
           darkMode={darkMode}
           onThemeToggle={toggleTheme}
