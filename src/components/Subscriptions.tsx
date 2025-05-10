@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import VideoGrid from './VideoGrid';
 import { Channel } from '../types';
-import { Eye, EyeOff, Filter, RefreshCw, Calendar, X } from 'lucide-react';
+import { Eye, EyeOff, Filter, RefreshCw, X } from 'lucide-react';
 
 const Subscriptions: React.FC = () => {
   const {
@@ -42,10 +42,7 @@ const Subscriptions: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Subscriptions</h2>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 rounded-lg text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-2">
-            <Calendar size={16} />
-            <span>After Apr 20, 2025</span>
-          </div>
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
