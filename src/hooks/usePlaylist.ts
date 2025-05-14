@@ -128,15 +128,15 @@ export const usePlaylist = () => {
         videosToMark.map(video => ({ ...video, selected: false, watched: true }))
       );
       
-      // Remove watched videos from the list
+      // Remove watched videos from the list without triggering a full refresh
       setVideos(prevVideos => 
         prevVideos.filter(video => !videosToMark.some(v => v.id === video.id))
       );
 
-      // Dispatch storage event to trigger refresh in other components
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'youtube_watch_history'
-      }));
+      // Remove the storage event dispatch since we don't need a full refresh
+      // window.dispatchEvent(new StorageEvent('storage', {
+      //   key: 'youtube_watch_history'
+      // }));
     } catch (err) {
       console.error('Error marking videos as watched:', err);
       setError('Failed to mark videos as watched');
