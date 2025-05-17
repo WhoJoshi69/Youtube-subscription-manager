@@ -281,14 +281,20 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   {/* Left: Movies */}
                   <div>
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       {movieRecs.map(movie => (
-                        <div key={movie.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
-                          <img
-                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
-                            alt={movie.title}
-                            className="rounded-3xl w-full h-32 object-cover"
-                          />
+                        <div
+                          key={movie.id}
+                          className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg"
+                          onClick={() => navigate(`/tmdb/movie/${movie.id}`)}
+                        >
+                          <div className="aspect-[2/3] w-full rounded-3xl overflow-hidden bg-gray-700">
+                            <img
+                              src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
+                              alt={movie.title}
+                              className="w-full h-full object-cover rounded-3xl"
+                            />
+                          </div>
                           <div className="text-xs text-center text-gray-100 font-semibold mt-1">{movie.title}</div>
                         </div>
                       ))}
@@ -297,14 +303,20 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   {/* Right: TV Shows */}
                   <div>
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       {tvRecs.map(tv => (
-                        <div key={tv.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
-                          <img
-                            src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
-                            alt={tv.name}
-                            className="rounded-3xl w-full h-32 object-cover"
-                          />
+                        <div
+                          key={tv.id}
+                          className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg"
+                          onClick={() => navigate(`/tmdb/tv/${tv.id}`)}
+                        >
+                          <div className="aspect-[2/3] w-full rounded-3xl overflow-hidden bg-gray-700">
+                            <img
+                              src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
+                              alt={tv.name}
+                              className="w-full h-full object-cover rounded-3xl"
+                            />
+                          </div>
                           <div className="text-xs text-center text-gray-100 font-semibold mt-1">{tv.name}</div>
                         </div>
                       ))}
@@ -354,12 +366,18 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {movieRecs.map(movie => (
-                      <div key={movie.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
-                        <img
-                          src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
-                          alt={movie.title}
-                          className="rounded-3xl w-full h-32 object-cover"
-                        />
+                      <div
+                        key={movie.id}
+                        className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg"
+                        onClick={() => navigate(`/tmdb/movie/${movie.id}`)}
+                      >
+                        <div className="aspect-[2/3] w-full rounded-3xl overflow-hidden bg-gray-700">
+                          <img
+                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
+                            alt={movie.title}
+                            className="w-full h-full object-cover rounded-3xl"
+                          />
+                        </div>
                         <div className="text-xs text-center text-gray-100 font-semibold mt-1">{movie.title}</div>
                       </div>
                     ))}
@@ -370,12 +388,18 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {tvRecs.map(tv => (
-                      <div key={tv.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
-                        <img
-                          src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
-                          alt={tv.name}
-                          className="rounded-3xl w-full h-32 object-cover"
-                        />
+                      <div
+                        key={tv.id}
+                        className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg"
+                        onClick={() => navigate(`/tmdb/tv/${tv.id}`)}
+                      >
+                        <div className="aspect-[2/3] w-full rounded-3xl overflow-hidden bg-gray-700">
+                          <img
+                            src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
+                            alt={tv.name}
+                            className="w-full h-full object-cover rounded-3xl"
+                          />
+                        </div>
                         <div className="text-xs text-center text-gray-100 font-semibold mt-1">{tv.name}</div>
                       </div>
                     ))}
