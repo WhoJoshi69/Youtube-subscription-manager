@@ -52,7 +52,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           <div className="w-full flex flex-col md:flex-row gap-8">
             {/* Poster */}
             <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-              <div className="aspect-[2/3] w-full rounded-lg overflow-hidden bg-gray-800">
+              <div className="aspect-[2/3] w-full rounded-lg overflow-hidden bg-gray-800 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
                 {data.poster_path && (
                   <img
                     src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
@@ -92,12 +92,15 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           <div className="w-full mt-8">
             <h2 className="text-xl font-semibold mb-2 text-white">Cast</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
-            {cast.map((member: any) => (
-                <div key={member.id} className="flex flex-col items-center">
+              {cast.map((member: any) => (
+                <div
+                  key={member.id}
+                  className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                >
                   <img
                     src={member.profile_path ? `https://image.tmdb.org/t/p/w185${member.profile_path}` : ''}
                     alt={member.name}
-                    className="rounded mb-1 w-24 h-32 object-cover bg-gray-700"
+                    className="rounded mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
                   />
                   <div className="text-xs text-center text-gray-100 font-semibold">{member.name}</div>
                   {member.character && (
