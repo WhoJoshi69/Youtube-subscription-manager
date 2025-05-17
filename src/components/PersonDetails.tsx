@@ -4,32 +4,37 @@ import { BackgroundGradient } from './ui/BackgroundGradient';
 import Header from './Header';
 import { GradientLayout } from './Layout/GradientLayout';
 
-interface PersonDetailsProps {
-  apiKey: string;
-}
-
-const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
+const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const { id } = useParams<{ id: string }>();
   const [person, setPerson] = useState<any>(null);
-  const [movieCredits, setMovieCredits] = useState<any[]>([]);
-  const [tvCredits, setTvCredits] = useState<any[]>([]);
+  const [credits, setCredits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'movies' | 'tv'>('movies');
   const navigate = useNavigate();
 
+  // Fetch person details only once
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([
-      fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${apiKey}&language=en-US`).then(res => res.json()),
-      fetch(`https://api.themoviedb.org/3/person/${id}/movie_credits?api_key=${apiKey}&language=en-US`).then(res => res.json()),
-      fetch(`https://api.themoviedb.org/3/person/${id}/tv_credits?api_key=${apiKey}&language=en-US`).then(res => res.json()),
-    ]).then(([personData, movieData, tvData]) => {
-      setPerson(personData);
-      setMovieCredits(movieData.cast || []);
-      setTvCredits(tvData.cast || []);
-    }).finally(() => setLoading(false));
+    fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${apiKey}&language=en-US`)
+      .then(res => res.json())
+      .then(data => setPerson(data))
+      .finally(() => setLoading(false));
   }, [id, apiKey]);
+
+  // Fetch credits on tab change
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    const url =
+      activeTab === 'movies'
+        ? `https://api.themoviedb.org/3/person/${id}/movie_credits?api_key=${apiKey}&language=en-US`
+        : `https://api.themoviedb.org/3/person/${id}/tv_credits?api_key=${apiKey}&language=en-US`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setCredits(data.cast || []))
+      .finally(() => setLoading(false));
+  }, [id, apiKey, activeTab]);
 
   if (loading) return <div>Loading...</div>;
   if (!person) return <div>Not found</div>;
@@ -79,7 +84,7 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
               </div>
             </div>
           </div>
-          {/* Movies */}
+          {/* Toggle and Grid */}
           <div className="w-full mt-8">
             <div className="flex gap-2 mb-4">
               <button
@@ -103,77 +108,59 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
                 TV Shows
               </button>
             </div>
-
-            {activeTab === 'movies' ? (
-              <>
-                <h2 className="text-xl font-semibold mb-2 text-white">Movies</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {movieCredits.map(movie => (
-                    <div
-                      key={movie.id}
-                      className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/tmdb/movie/${movie.id}`)}
-                    >
-                      <div className="aspect-[2/3] relative w-full">
-                        <img
-                          src={movie.poster_path
-                            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(movie.title)}&background=444&color=fff&size=256`}
-                          alt={movie.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <div className="text-white text-center p-4">
-                            <div className="text-xs font-semibold">{movie.title}</div>
-                            {movie.character && (
-                              <div className="text-[11px] italic mt-1">{movie.character}</div>
-                            )}
-                          </div>
+            <h2 className="text-xl font-semibold mb-2 text-white">
+              {activeTab === 'movies' ? 'Movies' : 'TV Shows'}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {credits.map(item => (
+                <div
+                  key={item.id}
+                  className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() =>
+                    navigate(
+                      activeTab === 'movies'
+                        ? `/tmdb/movie/${item.id}`
+                        : `/tmdb/tv/${item.id}`
+                    )
+                  }
+                >
+                  <div className="aspect-[2/3] relative w-full">
+                    <img
+                      src={item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            activeTab === 'movies' ? item.title : item.name
+                          )}&background=444&color=fff&size=256`}
+                      alt={activeTab === 'movies' ? item.title : item.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="text-white text-center p-4">
+                        <div className="text-xs font-semibold">
+                          {activeTab === 'movies' ? item.title : item.name}
                         </div>
-                      </div>
-                      <div className="p-2">
-                        <h3 className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-gray-100" title={movie.title}>
-                          {movie.title}
-                        </h3>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{movie.character}</div>
+                        {item.character && (
+                          <div className="text-[11px] italic mt-1">{item.character}</div>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold mb-2 text-white">TV Shows</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {tvCredits.map(tv => (
-                    <div
-                      key={tv.id}
-                      className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/tmdb/tv/${tv.id}`)}
+                  </div>
+                  <div className="p-2">
+                    <h3
+                      className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-gray-100"
+                      title={activeTab === 'movies' ? item.title : item.name}
                     >
-                      <div className="aspect-[2/3] relative w-full">
-                        <img
-                          src={tv.poster_path
-                            ? `https://image.tmdb.org/t/p/w500${tv.poster_path}`
-                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(tv.name)}&background=444&color=fff&size=256`}
-                          alt={tv.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="p-2">
-                        <h3 className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-gray-100" title={tv.name}>
-                          {tv.name}
-                        </h3>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{tv.character}</div>
-                      </div>
+                      {activeTab === 'movies' ? item.title : item.name}
+                    </h3>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                      {item.character}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
           </div>
         </div>
       </div>
