@@ -35,7 +35,7 @@ interface YouTubeApiResponse {
 export const fetchPlaylistVideos = async (
   url: string,
   pageToken?: string,
-  maxResults: number = 12
+  maxResults: number = 100
 ): Promise<{ videos: Video[]; nextPageToken?: string }> => {
   const playlistId = extractPlaylistId(url);
   
@@ -199,7 +199,7 @@ export const searchYouTubeChannel = async (query: string) => {
 export const fetchChannelUploads = async (
   channelId: string,
   pageToken?: string,
-  maxResults: number = 12
+  maxResults: number = 20
 ): Promise<{ videos: Video[]; nextPageToken?: string }> => {
   if (!YOUTUBE_API_KEY) {
     throw new Error("YouTube API key is not configured");
