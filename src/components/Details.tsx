@@ -277,11 +277,11 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                 </div>
               )}
               {activeTab === 'recommendations' && (
-                <div className="w-full mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="w-full mt-8 flex flex-col md:flex-row gap-8">
                   {/* Left: Movies */}
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       {movieRecs.map(movie => (
                         <div
                           key={movie.id}
@@ -300,10 +300,12 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                       ))}
                     </div>
                   </div>
+                  {/* Partition line */}
+                  <div className="hidden md:block w-px bg-gray-600 mx-4 my-2 rounded-full" />
                   {/* Right: TV Shows */}
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       {tvRecs.map(tv => (
                         <div
                           key={tv.id}
@@ -360,9 +362,9 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   ))}
                 </div>
               </div>
-              <div className="w-full mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="w-full mt-8 flex flex-col md:flex-row gap-8">
                 {/* Left: Movies */}
-                <div>
+                <div className="flex-1">
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {movieRecs.map(movie => (
@@ -383,8 +385,10 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                     ))}
                   </div>
                 </div>
+                {/* Partition line */}
+                <div className="hidden md:block w-px bg-gray-600 mx-4 my-2 rounded-full" />
                 {/* Right: TV Shows */}
-                <div>
+                <div className="flex-1">
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {tvRecs.map(tv => (
