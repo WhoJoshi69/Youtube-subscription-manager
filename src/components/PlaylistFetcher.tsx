@@ -28,6 +28,7 @@ const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [markingWatched, setMarkingWatched] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const placeholders = [
     "Enter a YouTube playlist URL or channel name...",
@@ -39,9 +40,9 @@ const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, value: string) => {
     e.preventDefault();
-    if (!value.trim()) return;
+    if (!searchQuery.trim()) return;
 
-    const query = value.trim();
+    const query = searchQuery.trim();
     
     // Check if the input is a URL (contains http:// or https://)
     if (query.includes('http://') || query.includes('https://')) {
@@ -90,6 +91,8 @@ const PlaylistFetcher: React.FC<PlaylistFetcherProps> = ({
       <div className="max-w-3xl mx-auto">
         <SearchInput
           placeholders={placeholders}
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
           onSubmit={handleSubmit}
           className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
         />
