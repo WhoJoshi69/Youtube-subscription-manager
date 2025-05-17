@@ -56,6 +56,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   const [personSuggestions, setPersonSuggestions] = useState<any[]>([]);
   const [personFilter, setPersonFilter] = useState<{id: number, name: string} | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<{id: number, name: string} | null>(null);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
   
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
@@ -281,6 +282,10 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    setHighlightedSuggestion(-1);
+  }, [personSuggestions]);
+
   const placeholders = [
     "Search movies & TV shows...",
     "Find your next favorite...",
@@ -428,27 +433,57 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Actor or Director</label>
             <div className="relative">
-              <input
-                type="text"
-                className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
-                placeholder="Search actor or director..."
+              <SearchInput
+                placeholders={["Search actor or director..."]}
                 value={personFilter ? personFilter.name : personQuery}
                 onChange={e => {
                   setPersonFilter(null);
                   setPersonQuery(e.target.value);
+                  setHighlightedSuggestion(-1);
                 }}
-                onFocus={() => setPersonSuggestions([])}
+                onKeyDown={e => {
+                  if (personSuggestions.length === 0) return;
+                  if (e.key === "ArrowDown") {
+                    setHighlightedSuggestion(prev =>
+                      prev < personSuggestions.length - 1 ? prev + 1 : 0
+                    );
+                    e.preventDefault();
+                  } else if (e.key === "ArrowUp") {
+                    setHighlightedSuggestion(prev =>
+                      prev > 0 ? prev - 1 : personSuggestions.length - 1
+                    );
+                    e.preventDefault();
+                  } else if (e.key === "Enter" && highlightedSuggestion >= 0) {
+                    const person = personSuggestions[highlightedSuggestion];
+                    setPersonFilter({ id: person.id, name: person.name });
+                    setPersonQuery(person.name);
+                    setPersonSuggestions([]);
+                    setHighlightedSuggestion(-1);
+                    e.preventDefault();
+                  }
+                }}
+                onSubmit={(_, value) => {
+                  setPersonQuery(value);
+                  setPage(1);
+                  setVideos([]);
+                  setHasMore(true);
+                  fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+                }}
+                className="w-full"
               />
               {personSuggestions.length > 0 && !personFilter && (
                 <div className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded w-full max-h-60 overflow-y-auto">
-                  {personSuggestions.map(person => (
+                  {personSuggestions.map((person, idx) => (
                     <div
                       key={person.id}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
+                      className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2 ${
+                        idx === highlightedSuggestion ? "bg-gray-200 dark:bg-gray-600" : ""
+                      }`}
                       onClick={() => {
                         setPersonFilter({ id: person.id, name: person.name });
                         setPersonQuery(person.name);
                         setPersonSuggestions([]);
+                        setHighlightedSuggestion(-1);
                       }}
                     >
                       <img

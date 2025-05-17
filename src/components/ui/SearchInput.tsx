@@ -11,6 +11,8 @@ interface SearchInputProps {
   className?: string;
   inputClassName?: string;
   buttonClassName?: string;
+  value?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function SearchInput({
@@ -19,15 +21,17 @@ export function SearchInput({
   onSubmit,
   className,
   inputClassName,
-  buttonClassName
+  buttonClassName,
+  value,
+  onKeyDown
 }: SearchInputProps) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [value, setValue] = useState("");
   const [animating, setAnimating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const newDataRef = useRef<any[]>([]);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState<number>(-1);
 
   const startAnimation = () => {
     intervalRef.current = setInterval(() => {
@@ -71,7 +75,7 @@ export function SearchInput({
     const fontSize = parseFloat(computedStyles.getPropertyValue("font-size"));
     ctx.font = `${fontSize * 2}px ${computedStyles.fontFamily}`;
     ctx.fillStyle = "#FFF";
-    ctx.fillText(value, 16, 40);
+    ctx.fillText(value || "", 16, 40);
 
     const imageData = ctx.getImageData(0, 0, 800, 800);
     const pixelData = imageData.data;
@@ -140,7 +144,6 @@ export function SearchInput({
         if (newDataRef.current.length > 0) {
           animateFrame(pos - 8);
         } else {
-          setValue("");
           setAnimating(false);
         }
       });
@@ -174,6 +177,10 @@ export function SearchInput({
     vanishAndSubmit();
   };
 
+  useEffect(() => {
+    setHighlightedSuggestion(-1);
+  }, []);
+
   return (
     <form
       className={cn(
@@ -193,11 +200,10 @@ export function SearchInput({
       <input
         onChange={(e) => {
           if (!animating) {
-            setValue(e.target.value);
             onChange?.(e);
           }
         }}
-        onKeyDown={handleKeyDown}
+        onKeyDown={onKeyDown}
         ref={inputRef}
         value={value}
         type="text"
