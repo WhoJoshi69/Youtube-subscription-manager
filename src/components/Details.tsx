@@ -78,12 +78,12 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           <div className="w-full flex flex-col md:flex-row gap-8">
             {/* Poster */}
             <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-              <BackgroundGradient className="rounded-lg overflow-hidden">
+              <BackgroundGradient style={{ borderRadius: '24px' }}>
                 <img
                   src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
                   alt={data.title || data.name}
+                  style={{ borderRadius: '24px', aspectRatio: '2/3' }}
                   className="w-full h-full object-contain"
-                  style={{ aspectRatio: '2/3' }}
                 />
               </BackgroundGradient>
             </div>

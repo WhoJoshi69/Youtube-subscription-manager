@@ -35,11 +35,14 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Profile Image */}
         <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-          <BackgroundGradient className="rounded-lg overflow-hidden">
+          <BackgroundGradient style={{ borderRadius: '24px' }}>
             <img
-              src={person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=256`}
+              src={person.profile_path
+                ? `https://image.tmdb.org/t/p/w500${person.profile_path}`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=256`}
               alt={person.name}
-              className="w-full rounded-lg"
+              style={{ borderRadius: '24px', aspectRatio: '2/3' }}
+              className="w-full h-full object-contain"
             />
           </BackgroundGradient>
         </div>
