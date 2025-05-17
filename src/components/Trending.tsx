@@ -305,6 +305,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
           <div className="relative flex-1 sm:flex-initial sm:w-96">
             <SearchInput
               placeholders={placeholders}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               onSubmit={(e, value) => setSearchQuery(value)}
               className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
             />
