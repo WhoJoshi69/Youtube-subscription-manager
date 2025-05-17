@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from './Header';
 import { Moon, Sun } from 'lucide-react';
+import { GradientLayout } from './Layout/GradientLayout';
 
 interface DetailsProps {
   apiKey: string;
@@ -40,12 +41,11 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const cast = credits?.cast?.slice(0, 8) || [];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-[#181824] to-[#232336]`}>
+    <GradientLayout darkMode={darkMode}>
       <Header
         darkMode={darkMode}
         onThemeToggle={onThemeToggle}
       />
-
       <div className="container mx-auto px-4 py-8">
         <div className="bg-black/60 dark:bg-gray-900/80 rounded-2xl shadow-lg flex flex-col md:flex-row gap-8 p-6">
           <div className="flex-shrink-0 w-full md:w-64 aspect-[2/3] rounded-lg overflow-hidden bg-gray-800">
@@ -97,7 +97,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           </div>
         </div>
       </div>
-    </div>
+    </GradientLayout>
   );
 };
 
