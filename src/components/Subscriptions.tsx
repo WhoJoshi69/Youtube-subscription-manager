@@ -28,12 +28,11 @@ const Subscriptions: React.FC = () => {
     refreshVideos();
   }, []); // Empty dependency array means this runs once on mount
 
-  const handleVideoWatched = async (videoId: string) => {
+  const handleVideoWatched = async (videoIds: string | string[]) => {
     try {
-      // Just mark as watched, no need to refresh
-      await markAsWatched(videoId);
+      await markAsWatched(videoIds);
     } catch (error) {
-      console.error('Error marking video as watched:', error);
+      console.error('Error marking video(s) as watched:', error);
     }
   };
 

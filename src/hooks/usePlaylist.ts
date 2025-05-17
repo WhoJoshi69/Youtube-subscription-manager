@@ -107,14 +107,14 @@ export const usePlaylist = () => {
     }
   };
 
-  const markAsWatched = async (videoId?: string) => {
+  const markAsWatched = async (videoIds?: string[] | string) => {
     try {
-      let videosToMark;
-      if (videoId) {
-        // Single video case
-        videosToMark = videos.filter(video => video.id === videoId);
+      let videosToMark: Video[] = [];
+      if (Array.isArray(videoIds) && videoIds.length > 0) {
+        videosToMark = videos.filter(video => videoIds.includes(video.id));
+      } else if (typeof videoIds === 'string') {
+        videosToMark = videos.filter(video => video.id === videoIds);
       } else {
-        // Multiple selected videos case
         videosToMark = videos.filter(video => video.selected);
       }
       

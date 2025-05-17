@@ -196,7 +196,21 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
         {selectedCount > 0 && (
           <button
-            onClick={onMarkAsWatched}
+            onClick={() => {
+              // Get the currently visible and selected videos
+              const selectedIds = sortedVideos
+                .filter(video => {
+                  if (!searchQuery.trim()) return true;
+                  const query = searchQuery.toLowerCase();
+                  return (
+                    video.title.toLowerCase().includes(query) ||
+                    video.description?.toLowerCase().includes(query)
+                  );
+                })
+                .filter(video => video.selected)
+                .map(video => video.id);
+              onMarkAsWatched(selectedIds);
+            }}
             className="w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm bg-green-600 hover:bg-green-700 text-white"
           >
             <CheckCircle size={16} />
