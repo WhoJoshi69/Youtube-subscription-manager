@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { Moon, Sun } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
@@ -18,6 +18,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [loading, setLoading] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [seasonDetails, setSeasonDetails] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -188,6 +189,8 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                 <div
                   key={member.id}
                   className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                  onClick={() => navigate(`/person/${member.id}`)}
+                  style={{ cursor: 'pointer' }}
                 >
                   <img
                     src={
