@@ -120,9 +120,7 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
             key={person.id}
             ref={idx === people.length - 1 ? lastPersonElementRef : undefined}
             className="group flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => {
-              navigate('/', { state: { personFilter: { id: person.id, name: person.name } } });
-            }}
+            onClick={() => navigate(`/person/${person.id}`)}
           >
             <div className="aspect-[2/3] relative">
               <img

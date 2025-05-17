@@ -17,6 +17,7 @@ import { Navigation } from './components/Navigation';
 import { Routes, Route } from 'react-router-dom';
 import Details from './components/Details';
 import People from './components/People';
+import PersonDetails from './components/PersonDetails';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
 
@@ -216,6 +217,7 @@ function App() {
           path="/tmdb/:type/:id"
           element={<Details apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
         />
+        <Route path="/person/:id" element={<PersonDetails apiKey={tmdbApiKey} />} />
       </Routes>
     </GradientLayout>
   );
