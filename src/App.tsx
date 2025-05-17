@@ -215,7 +215,7 @@ function App() {
         />
         <Route
           path="/tmdb/:type/:id"
-          element={<Details apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
+          element={<Details apiKey={tmdbApiKey} />}
         />
         <Route path="/person/:id" element={<PersonDetails apiKey={tmdbApiKey} />} />
       </Routes>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Video } from '../types';
 import { Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface MovieGridProps {
   videos: Video[];
@@ -15,6 +16,8 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   isLoadingMore, 
   lastVideoElementRef 
 }) => {
+  const navigate = useNavigate();
+
   const LoadingSkeleton = () => (
     <div className="animate-pulse">
       <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
@@ -48,7 +51,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
             className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             onClick={() => {
-              if (detailUrl) window.open(detailUrl, '_blank', 'noopener,noreferrer');
+              if (detailUrl) navigate(detailUrl);
             }}
             style={{ cursor: isTmdb ? 'pointer' : 'default' }}
           >

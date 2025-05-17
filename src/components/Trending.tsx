@@ -3,7 +3,7 @@ import MovieGrid from './MovieGrid';
 import { Video } from '../types';
 import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface FilterState {
   sortBy: string;
@@ -60,6 +60,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const fetchGenres = async (type: 'movie' | 'tv') => {
     try {
