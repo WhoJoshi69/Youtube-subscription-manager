@@ -20,6 +20,9 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [seasonDetails, setSeasonDetails] = useState<any>(null);
   const [showCast, setShowCast] = useState(true);
+  const [activeTab, setActiveTab] = useState<'cast' | 'episodes' | 'recommendations'>('cast');
+  const [movieRecs, setMovieRecs] = useState<any[]>([]);
+  const [tvRecs, setTvRecs] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,6 +69,30 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
       setSelectedSeason(data.seasons[0].season_number);
     }
   }, [type, data]);
+
+  useEffect(() => {
+    if (!id || !type) return;
+    const fetchRecs = async () => {
+      if (type === 'movie') {
+        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}`);
+        const movieData = await movieRes.json();
+        setMovieRecs(movieData.results || []);
+        // Optionally, fetch TV recs for the right grid
+        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}`);
+        const tvData = await tvRes.json();
+        setTvRecs(tvData.results || []);
+      } else if (type === 'tv') {
+        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}`);
+        const tvData = await tvRes.json();
+        setTvRecs(tvData.results || []);
+        // Optionally, fetch movie recs for the left grid
+        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}`);
+        const movieData = await movieRes.json();
+        setMovieRecs(movieData.results || []);
+      }
+    };
+    fetchRecs();
+  }, [id, type, apiKey]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Not found</div>;
@@ -145,28 +172,26 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
             <>
               <div className="flex justify-center gap-4 my-6">
                 <button
-                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-                    showCast
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-                  }`}
-                  onClick={() => setShowCast(true)}
+                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${activeTab === 'cast' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}
+                  onClick={() => setActiveTab('cast')}
                 >
                   Cast
                 </button>
                 <button
-                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-                    !showCast
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-                  }`}
-                  onClick={() => setShowCast(false)}
+                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${activeTab === 'episodes' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}
+                  onClick={() => setActiveTab('episodes')}
                 >
                   Episodes
                 </button>
+                <button
+                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${activeTab === 'recommendations' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}
+                  onClick={() => setActiveTab('recommendations')}
+                >
+                  Recommendations
+                </button>
               </div>
 
-              {showCast ? (
+              {activeTab === 'cast' && (
                 <div className="w-full mt-8">
                   <h2 className="text-xl font-semibold mb-2 text-white">Cast</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
@@ -199,7 +224,8 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                     ))}
                   </div>
                 </div>
-              ) : (
+              )}
+              {activeTab === 'episodes' && (
                 <div className="w-full mt-8">
                   <h2 className="text-xl font-semibold mb-2 text-white">Episodes</h2>
                   <div className="mb-4">
@@ -250,41 +276,113 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   )}
                 </div>
               )}
+              {activeTab === 'recommendations' && (
+                <div className="w-full mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left: Movies */}
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {movieRecs.map(movie => (
+                        <div key={movie.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
+                          <img
+                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
+                            alt={movie.title}
+                            className="rounded-3xl w-full h-32 object-cover"
+                          />
+                          <div className="text-xs text-center text-gray-100 font-semibold mt-1">{movie.title}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Right: TV Shows */}
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {tvRecs.map(tv => (
+                        <div key={tv.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
+                          <img
+                            src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
+                            alt={tv.name}
+                            className="rounded-3xl w-full h-32 object-cover"
+                          />
+                          <div className="text-xs text-center text-gray-100 font-semibold mt-1">{tv.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
           {type === 'movie' && (
-            <div className="w-full mt-8">
-              <h2 className="text-xl font-semibold mb-2 text-white">Cast</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
-                {cast.map((member: any) => (
-                  <div
-                    key={member.id}
-                    className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
-                    onClick={() => navigate(`/person/${member.id}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img
-                      src={
-                        member.profile_path
-                          ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
-                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`
-                      }
-                      alt={member.name}
-                      className="rounded-3xl mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
-                      onError={e => {
-                        // fallback to avatar if image fails to load
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`;
-                      }}
-                    />
-                    <div className="text-xs text-center text-gray-100 font-semibold">{member.name}</div>
-                    {member.character && (
-                      <div className="text-[11px] text-center text-gray-400 italic">{member.character}</div>
-                    )}
-                  </div>
-                ))}
+            <>
+              <div className="w-full mt-8">
+                <h2 className="text-xl font-semibold mb-2 text-white">Cast</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
+                  {cast.map((member: any) => (
+                    <div
+                      key={member.id}
+                      className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                      onClick={() => navigate(`/person/${member.id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img
+                        src={
+                          member.profile_path
+                            ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`
+                        }
+                        alt={member.name}
+                        className="rounded-3xl mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
+                        onError={e => {
+                          // fallback to avatar if image fails to load
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`;
+                        }}
+                      />
+                      <div className="text-xs text-center text-gray-100 font-semibold">{member.name}</div>
+                      {member.character && (
+                        <div className="text-[11px] text-center text-gray-400 italic">{member.character}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+              <div className="w-full mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left: Movies */}
+                <div>
+                  <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {movieRecs.map(movie => (
+                      <div key={movie.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
+                        <img
+                          src={movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : ''}
+                          alt={movie.title}
+                          className="rounded-3xl w-full h-32 object-cover"
+                        />
+                        <div className="text-xs text-center text-gray-100 font-semibold mt-1">{movie.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Right: TV Shows */}
+                <div>
+                  <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {tvRecs.map(tv => (
+                      <div key={tv.id} className="bg-gray-800 rounded-3xl p-2 flex flex-col items-center">
+                        <img
+                          src={tv.poster_path ? `https://image.tmdb.org/t/p/w185${tv.poster_path}` : ''}
+                          alt={tv.name}
+                          className="rounded-3xl w-full h-32 object-cover"
+                        />
+                        <div className="text-xs text-center text-gray-100 font-semibold mt-1">{tv.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
