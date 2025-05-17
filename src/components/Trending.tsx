@@ -3,6 +3,7 @@ import MovieGrid from './MovieGrid';
 import { Video } from '../types';
 import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
+import { useLocation } from 'react-router-dom';
 
 interface FilterState {
   sortBy: string;
@@ -58,6 +59,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
+  const location = useLocation();
 
   const fetchGenres = async (type: 'movie' | 'tv') => {
     try {
@@ -161,6 +163,33 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       setVideos(prev => 
         isLoadingMore ? [...prev, ...convertedVideos] : convertedVideos
       );
+
+      if (personFilter && activeTab === 'tvshows') {
+        setIsLoading(true);
+        fetch(`https://api.themoviedb.org/3/person/${personFilter.id}/tv_credits?api_key=${apiKey}`)
+          .then(res => res.json())
+          .then(data => {
+            // Merge cast and crew, remove duplicates by show ID
+            const allShows = [...(data.cast || []), ...(data.crew || [])];
+            const uniqueShows = Array.from(new Map(allShows.map(show => [show.id, show])).values());
+            setVideos(uniqueShows.map(show => ({
+              id: `tmdb-${show.id}`,
+              tmdbId: show.id,
+              tmdbType: 'tv',
+              title: show.name,
+              description: show.overview,
+              thumbnail: show.poster_path ? `https://image.tmdb.org/t/p/w500${show.poster_path}` : '',
+              publishedAt: show.first_air_date,
+              channelTitle: 'TV Shows',
+              selected: false,
+              watched: false,
+              rating: show.vote_average
+            })));
+            setHasMore(false); // No pagination for this endpoint
+          })
+          .finally(() => setIsLoading(false));
+        return; // Don't run the normal discover/tv fetch
+      }
     } catch (err) {
       setError('Failed to fetch content');
       console.error('Error fetching content:', err);
@@ -242,6 +271,14 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     setHasMore(true);
     fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
   }, [selectedPerson]);
+
+  useEffect(() => {
+    if (location.state && location.state.personFilter) {
+      setPersonFilter(location.state.personFilter);
+      // Optionally, clear the state so it doesn't persist on next navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const placeholders = [
     "Search movies & TV shows...",

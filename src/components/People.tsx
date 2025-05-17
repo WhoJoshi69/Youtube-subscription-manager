@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchInput } from './ui/SearchInput';
+import { useNavigate } from 'react-router-dom';
 
 interface Person {
   id: number;
@@ -32,6 +33,8 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
     });
     if (node) observer.current.observe(node);
   }, [isLoading, hasMore]);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!searchQuery) {
@@ -116,7 +119,10 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
           <div
             key={person.id}
             ref={idx === people.length - 1 ? lastPersonElementRef : undefined}
-            className="group flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className="group flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => {
+              navigate('/', { state: { personFilter: { id: person.id, name: person.name } } });
+            }}
           >
             <div className="aspect-[2/3] relative">
               <img
