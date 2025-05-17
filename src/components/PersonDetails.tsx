@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 import Header from './Header';
 import { GradientLayout } from './Layout/GradientLayout';
@@ -15,6 +15,7 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
   const [tvCredits, setTvCredits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'movies' | 'tv'>('movies');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!id) return;
@@ -111,6 +112,7 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
                     <div
                       key={movie.id}
                       className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/tmdb/movie/${movie.id}`)}
                     >
                       <div className="aspect-[2/3] relative w-full">
                         <img
@@ -121,6 +123,15 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
                           className="absolute inset-0 w-full h-full object-cover"
                           loading="lazy"
                         />
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="text-white text-center p-4">
+                            <div className="text-xs font-semibold">{movie.title}</div>
+                            {movie.character && (
+                              <div className="text-[11px] italic mt-1">{movie.character}</div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <div className="p-2">
                         <h3 className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-gray-100" title={movie.title}>
@@ -140,6 +151,7 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
                     <div
                       key={tv.id}
                       className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/tmdb/tv/${tv.id}`)}
                     >
                       <div className="aspect-[2/3] relative w-full">
                         <img
