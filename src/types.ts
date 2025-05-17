@@ -2,6 +2,8 @@ export type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
 
 export interface Video {
   id: string;
+  tmdbId?: number;
+  tmdbType?: string;
   title: string;
   description: string;
   thumbnail: string;

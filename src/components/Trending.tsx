@@ -115,6 +115,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       // Convert TMDB format to our Video format
       const convertedVideos: Video[] = data.results.map((item: TMDBVideo) => ({
         id: `tmdb-${item.id}`,
+        tmdbId: item.id,
+        tmdbType: type,
         title: item.title || item.name,
         description: item.overview,
         thumbnail: `https://image.tmdb.org/t/p/w500${item.poster_path}`,

@@ -36,43 +36,54 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {/* Render existing videos */}
-      {videos.map((video, index) => (
-        <div
-          key={video.id}
-          ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
-          className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-        >
-          {/* Poster Image */}
-          <div className="aspect-[2/3] relative">
-            <img
-              src={video.thumbnail}
-              alt={video.title}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="text-white text-center p-4">
-                <p className="text-sm line-clamp-4">{video.description}</p>
-                <div className="mt-2 flex items-center justify-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="text-sm font-medium">{video.rating?.toFixed(1)}</span>
+      {videos.map((video, index) => {
+        const isTmdb = video.tmdbId && video.tmdbType;
+        const tmdbUrl = isTmdb
+          ? `https://www.themoviedb.org/${video.tmdbType}/${video.tmdbId}`
+          : undefined;
+
+        return (
+          <div
+            key={video.id}
+            ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
+            className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            onClick={() => {
+              if (tmdbUrl) window.open(tmdbUrl, '_blank', 'noopener,noreferrer');
+            }}
+            style={{ cursor: isTmdb ? 'pointer' : 'default' }}
+          >
+            {/* Poster Image */}
+            <div className="aspect-[2/3] relative">
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="text-white text-center p-4">
+                  <p className="text-sm line-clamp-4">{video.description}</p>
+                  <div className="mt-2 flex items-center justify-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <span className="text-sm font-medium">{video.rating?.toFixed(1)}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Title */}
-          <div className="p-2">
-            <h3 className="text-sm font-medium line-clamp-2" title={video.title}>
-              {video.title}
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {new Date(video.publishedAt).getFullYear()}
-            </p>
+            {/* Title */}
+            <div className="p-2">
+              <h3 className="text-sm font-medium line-clamp-2" title={video.title}>
+                {video.title}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {new Date(video.publishedAt).getFullYear()}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Show loading skeletons at the bottom when loading more */}
       {isLoadingMore && (
