@@ -60,6 +60,12 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     }
   }, [type, id, selectedSeason, apiKey]);
 
+  useEffect(() => {
+    if (type === 'tv' && data?.seasons && data.seasons.length > 0) {
+      setSelectedSeason(data.seasons[0].season_number);
+    }
+  }, [type, data]);
+
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Not found</div>;
 
@@ -78,12 +84,12 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           <div className="w-full flex flex-col md:flex-row gap-8">
             {/* Poster */}
             <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-              <BackgroundGradient style={{ borderRadius: '24px' }}>
+              <BackgroundGradient className="rounded-3xl overflow-hidden">
                 <img
                   src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
                   alt={data.title || data.name}
                   style={{ borderRadius: '24px', aspectRatio: '2/3' }}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain rounded-3xl"
                 />
               </BackgroundGradient>
             </div>
@@ -123,7 +129,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                         <img
                           src={`https://image.tmdb.org/t/p/w45${provider.logo_path}`}
                           alt={provider.provider_name}
-                          className="w-8 h-8 rounded shadow"
+                          className="w-8 h-8 rounded-3xl shadow"
                         />
                         <span className="sr-only">{provider.provider_name}</span>
                       </a>
@@ -157,19 +163,24 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <h3 className="text-lg font-semibold mb-2 text-white">
                     {seasonDetails.name}
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                     {seasonDetails.episodes.map((ep: any) => (
-                      <div key={ep.id} className="bg-gray-800 rounded-lg p-2 flex flex-col items-center">
-                        <img
-                          src={
-                            ep.still_path
-                              ? `https://image.tmdb.org/t/p/w300${ep.still_path}`
-                              : `https://ui-avatars.com/api/?name=Episode+${ep.episode_number}&background=444&color=fff&size=128`
-                          }
-                          alt={ep.name}
-                          className="rounded mb-2 w-full h-32 object-cover bg-gray-700"
-                        />
-                        <div className="text-xs text-center text-gray-100 font-semibold">{ep.episode_number}. {ep.name}</div>
+                      <div
+                        key={ep.id}
+                        className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                      >
+                        <div className="aspect-[16/9] w-full rounded-3xl overflow-hidden bg-gray-700">
+                          <img
+                            src={
+                              ep.still_path
+                                ? `https://image.tmdb.org/t/p/w300${ep.still_path}`
+                                : `https://ui-avatars.com/api/?name=Episode+${ep.episode_number}&background=444&color=fff&size=128`
+                            }
+                            alt={ep.name}
+                            className="w-full h-full object-cover rounded-3xl"
+                          />
+                        </div>
+                        <div className="text-xs text-center text-gray-100 font-semibold mt-1">{ep.episode_number}. {ep.name}</div>
                         {ep.overview && (
                           <div className="text-[11px] text-gray-400 mt-1 line-clamp-2">{ep.overview}</div>
                         )}
@@ -198,7 +209,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`
                     }
                     alt={member.name}
-                    className="rounded mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
+                    className="rounded-3xl mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
                     onError={e => {
                       // fallback to avatar if image fails to load
                       e.currentTarget.onerror = null;
