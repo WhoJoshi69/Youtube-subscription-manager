@@ -211,7 +211,7 @@ function App() {
         />
         <Route
           path="/tmdb/:type/:id"
-          element={<Details apiKey={tmdbApiKey} />}
+          element={<Details apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
         />
       </Routes>
     </GradientLayout>
