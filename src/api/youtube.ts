@@ -66,6 +66,26 @@ export const fetchPlaylistVideos = async (
       throw new Error(data.error?.message || 'Failed to fetch playlist videos');
     }
 
+    // Extract video IDs
+    const videoIds = data.items.map((item: any) => item.snippet.resourceId.videoId).filter(Boolean);
+
+    // Fetch view counts in batch (max 50 per request)
+    let viewCounts: Record<string, number> = {};
+    if (videoIds.length > 0) {
+      const videosApiUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+      videosApiUrl.searchParams.append('part', 'statistics');
+      videosApiUrl.searchParams.append('id', videoIds.join(','));
+      videosApiUrl.searchParams.append('key', YOUTUBE_API_KEY);
+
+      const videosResponse = await fetch(videosApiUrl.toString());
+      const videosData = await videosResponse.json();
+      if (videosResponse.ok) {
+        for (const item of videosData.items) {
+          viewCounts[item.id] = parseInt(item.statistics.viewCount, 10) || 0;
+        }
+      }
+    }
+
     const videos = data.items.map((item: any) => ({
       id: item.snippet.resourceId.videoId,
       title: item.snippet.title,
@@ -76,7 +96,8 @@ export const fetchPlaylistVideos = async (
       channelTitle: item.snippet.channelTitle,
       publishedAt: item.snippet.publishedAt,
       selected: false,
-      url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`
+      url: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
+      viewCount: viewCounts[item.snippet.resourceId.videoId] ?? 0,
     }));
 
     return {

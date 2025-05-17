@@ -249,15 +249,24 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
       {/* Video Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all duration-300">
-        {filteredVideos.map(video => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            onToggleSelect={handleToggleSelect}
-            onMarkAsWatched={onMarkAsWatched}
-            showChannelNames={showChannelNames}
-          />
-        ))}
+        {sortedVideos
+          .filter(video => {
+            if (!searchQuery.trim()) return true;
+            const query = searchQuery.toLowerCase();
+            return (
+              video.title.toLowerCase().includes(query) ||
+              video.description?.toLowerCase().includes(query)
+            );
+          })
+          .map(video => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              onToggleSelect={handleToggleSelect}
+              onMarkAsWatched={onMarkAsWatched}
+              showChannelNames={showChannelNames}
+            />
+          ))}
       </div>
 
       {/* Loading trigger element */}
