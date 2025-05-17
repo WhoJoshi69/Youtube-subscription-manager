@@ -16,8 +16,9 @@ import { GradientLayout } from './components/Layout/GradientLayout';
 import { Navigation } from './components/Navigation';
 import { Routes, Route } from 'react-router-dom';
 import Details from './components/Details';
+import People from './components/People';
 
-type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
+type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
 
 function App() {
   const {
@@ -186,6 +187,8 @@ function App() {
                     <Subscriptions />
                   ) : activeSection === 'trending' ? (
                     <Trending apiKey={tmdbApiKey} />
+                  ) : activeSection === 'people' ? (
+                    <People apiKey={tmdbApiKey} />
                   ) : (
                     <History
                       watchedVideos={watchedVideos}
@@ -198,7 +201,7 @@ function App() {
                 </main>
 
                 <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                  <p>© 2024 WhoJoshi Subscription Manager</p>
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
                 </footer>
               </div>
 

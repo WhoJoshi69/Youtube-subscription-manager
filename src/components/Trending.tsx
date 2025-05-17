@@ -51,6 +51,10 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [personQuery, setPersonQuery] = useState('');
+  const [personSuggestions, setPersonSuggestions] = useState<any[]>([]);
+  const [personFilter, setPersonFilter] = useState<{id: number, name: string} | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<{id: number, name: string} | null>(null);
   
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
@@ -82,8 +86,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         filters.sortBy !== 'popularity.desc' ||
         filters.year ||
         filters.voteAverage ||
-        (filters.withGenres && filters.withGenres.length > 0)
-        // add other filters as needed
+        (filters.withGenres && filters.withGenres.length > 0) ||
+        personFilter
       );
 
       // Build the base URL based on whether we're searching or getting trending
@@ -115,6 +119,12 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
           } else if (type === 'tv') {
             queryParams.append('first_air_date_year', filters.year.toString());
           }
+        }
+        if (selectedPerson) {
+          queryParams.append('with_people', selectedPerson.id.toString());
+        }
+        if (personFilter) {
+          queryParams.append('with_people', personFilter.id.toString());
         }
         // ...add other filters as needed
       }
@@ -215,6 +225,23 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       fetchContent(activeTab === 'movies' ? 'movie' : 'tv', page, true);
     }
   }, [page]); // This effect will run whenever page changes
+
+  useEffect(() => {
+    if (personQuery.length < 2) {
+      setPersonSuggestions([]);
+      return;
+    }
+    fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${encodeURIComponent(personQuery)}`)
+      .then(res => res.json())
+      .then(data => setPersonSuggestions(data.results || []));
+  }, [personQuery, apiKey]);
+
+  useEffect(() => {
+    setPage(1);
+    setVideos([]);
+    setHasMore(true);
+    fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+  }, [selectedPerson]);
 
   const placeholders = [
     "Search movies & TV shows...",
@@ -356,6 +383,53 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
                   {genre.name}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Person Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Actor or Director</label>
+            <div className="relative">
+              <input
+                type="text"
+                className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
+                placeholder="Search actor or director..."
+                value={personFilter ? personFilter.name : personQuery}
+                onChange={e => {
+                  setPersonFilter(null);
+                  setPersonQuery(e.target.value);
+                }}
+                onFocus={() => setPersonSuggestions([])}
+              />
+              {personSuggestions.length > 0 && !personFilter && (
+                <div className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded w-full max-h-60 overflow-y-auto">
+                  {personSuggestions.map(person => (
+                    <div
+                      key={person.id}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
+                      onClick={() => {
+                        setPersonFilter({ id: person.id, name: person.name });
+                        setPersonQuery(person.name);
+                        setPersonSuggestions([]);
+                      }}
+                    >
+                      <img
+                        src={person.profile_path ? `https://image.tmdb.org/t/p/w45${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=32`}
+                        alt={person.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span>{person.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {personFilter && (
+                <button
+                  className="absolute right-2 top-2 text-gray-400 hover:text-red-500"
+                  onClick={() => setPersonFilter(null)}
+                  title="Clear person filter"
+                >×</button>
+              )}
             </div>
           </div>
 
