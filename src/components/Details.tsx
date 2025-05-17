@@ -16,6 +16,8 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [credits, setCredits] = useState<any>(null);
   const [providers, setProviders] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [seasonDetails, setSeasonDetails] = useState<any>(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -43,6 +45,18 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     };
     fetchDetails();
   }, [type, id, apiKey]);
+
+  useEffect(() => {
+    if (type === 'tv' && id && selectedSeason !== null) {
+      const fetchSeason = async () => {
+        const seasonUrl = `https://api.themoviedb.org/3/tv/${id}/season/${selectedSeason}?api_key=${apiKey}&language=en-US`;
+        const res = await fetch(seasonUrl);
+        const data = await res.json();
+        setSeasonDetails(data);
+      };
+      fetchSeason();
+    }
+  }, [type, id, selectedSeason, apiKey]);
 
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Not found</div>;
@@ -119,6 +133,53 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
               </div>
             </div>
           </div>
+          {/* Seasons Section for TV Shows */}
+          {type === 'tv' && data?.seasons && (
+            <div className="w-full mt-8">
+              <h2 className="text-xl font-semibold mb-2 text-white">Seasons</h2>
+              <div className="mb-4">
+                <select
+                  className="bg-gray-800 text-white rounded px-3 py-2"
+                  value={selectedSeason ?? ''}
+                  onChange={e => setSelectedSeason(Number(e.target.value))}
+                >
+                  <option value="" disabled>Select a season</option>
+                  {data.seasons.map((season: any) => (
+                    <option key={season.id} value={season.season_number}>
+                      {season.name} ({season.episode_count} episodes)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Episodes Grid */}
+              {seasonDetails && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-2 text-white">
+                    {seasonDetails.name}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {seasonDetails.episodes.map((ep: any) => (
+                      <div key={ep.id} className="bg-gray-800 rounded-lg p-2 flex flex-col items-center">
+                        <img
+                          src={
+                            ep.still_path
+                              ? `https://image.tmdb.org/t/p/w300${ep.still_path}`
+                              : `https://ui-avatars.com/api/?name=Episode+${ep.episode_number}&background=444&color=fff&size=128`
+                          }
+                          alt={ep.name}
+                          className="rounded mb-2 w-full h-32 object-cover bg-gray-700"
+                        />
+                        <div className="text-xs text-center text-gray-100 font-semibold">{ep.episode_number}. {ep.name}</div>
+                        {ep.overview && (
+                          <div className="text-[11px] text-gray-400 mt-1 line-clamp-2">{ep.overview}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* Cast Grid - always below poster/details */}
           <div className="w-full mt-8">
             <h2 className="text-xl font-semibold mb-2 text-white">Cast</h2>
