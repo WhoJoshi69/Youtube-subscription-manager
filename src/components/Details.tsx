@@ -99,7 +99,10 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                     alt={member.name}
                     className="rounded mb-1 w-24 h-32 object-cover bg-gray-700"
                   />
-                  <div className="text-xs text-center text-gray-100">{member.name}</div>
+                  <div className="text-xs text-center text-gray-100 font-semibold">{member.name}</div>
+                  {member.character && (
+                    <div className="text-[11px] text-center text-gray-400 italic">{member.character}</div>
+                  )}
                 </div>
               ))}
             </div>
