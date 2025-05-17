@@ -476,7 +476,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
                   {personSuggestions.map((person, idx) => (
                     <div
                       key={person.id}
-                      className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2 ${
+                      className={`py-3 px-2 min-h-[56px] hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-3 ${
                         idx === highlightedSuggestion ? "bg-gray-200 dark:bg-gray-600" : ""
                       }`}
                       onClick={() => {
@@ -487,11 +487,11 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
                       }}
                     >
                       <img
-                        src={person.profile_path ? `https://image.tmdb.org/t/p/w45${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=32`}
+                        src={person.profile_path ? `https://image.tmdb.org/t/p/w45${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=56`}
                         alt={person.name}
-                        className="w-8 h-8 rounded-full"
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                       />
-                      <span>{person.name}</span>
+                      <span className="truncate">{person.name}</span>
                     </div>
                   ))}
                 </div>
