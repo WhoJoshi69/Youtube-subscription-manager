@@ -77,10 +77,21 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     setError(null);
 
     try {
+      // Determine if any filter is active
+      const isFiltering = !!(
+        filters.sortBy !== 'popularity.desc' ||
+        filters.year ||
+        filters.voteAverage ||
+        (filters.withGenres && filters.withGenres.length > 0)
+        // add other filters as needed
+      );
+
       // Build the base URL based on whether we're searching or getting trending
       const baseUrl = searchQuery
         ? `https://api.themoviedb.org/3/search/${type}`
-        : `https://api.themoviedb.org/3/trending/${type}/day`;
+        : isFiltering
+          ? `https://api.themoviedb.org/3/discover/${type}`
+          : `https://api.themoviedb.org/3/trending/${type}/day`;
 
       // Build query parameters
       const queryParams = new URLSearchParams({
@@ -93,15 +104,20 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         queryParams.append('query', searchQuery);
       }
 
-      // Add filters to query parameters
-      if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
-      if (filters.voteAverage) queryParams.append('vote_average.gte', filters.voteAverage.toString());
-      if (filters.withGenres?.length) queryParams.append('with_genres', filters.withGenres.join(','));
-      if (filters.releaseDateGte) queryParams.append('release_date.gte', filters.releaseDateGte);
-      if (filters.releaseDateLte) queryParams.append('release_date.lte', filters.releaseDateLte);
-      if (filters.voteCountGte) queryParams.append('vote_count.gte', filters.voteCountGte.toString());
-      if (filters.language) queryParams.append('language', filters.language);
-      if (filters.region) queryParams.append('region', filters.region);
+      // Only add filter params if using discover
+      if (baseUrl.includes('/discover/')) {
+        if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
+        if (filters.voteAverage) queryParams.append('vote_average.gte', filters.voteAverage.toString());
+        if (filters.withGenres?.length) queryParams.append('with_genres', filters.withGenres.join(','));
+        if (filters.year) {
+          if (type === 'movie') {
+            queryParams.append('primary_release_year', filters.year.toString());
+          } else if (type === 'tv') {
+            queryParams.append('first_air_date_year', filters.year.toString());
+          }
+        }
+        // ...add other filters as needed
+      }
 
       const response = await fetch(
         `${baseUrl}?${queryParams.toString()}`
