@@ -55,10 +55,18 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             {/* Poster Image */}
             <div className="aspect-[2/3] relative">
               <img
-                src={video.thumbnail}
+                src={
+                  video.thumbnail
+                    ? video.thumbnail
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(video.title)}&background=444&color=fff&size=256`
+                }
                 alt={video.title}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading="lazy"
+                onError={e => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(video.title)}&background=444&color=fff&size=256`;
+                }}
               />
               {/* Hover Overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

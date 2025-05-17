@@ -98,9 +98,18 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
                 >
                   <img
-                    src={member.profile_path ? `https://image.tmdb.org/t/p/w185${member.profile_path}` : ''}
+                    src={
+                      member.profile_path
+                        ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`
+                    }
                     alt={member.name}
                     className="rounded mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
+                    onError={e => {
+                      // fallback to avatar if image fails to load
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=444&color=fff&size=128`;
+                    }}
                   />
                   <div className="text-xs text-center text-gray-100 font-semibold">{member.name}</div>
                   {member.character && (
