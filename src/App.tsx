@@ -14,6 +14,8 @@ import './styles/logo.css';
 import Trending from './components/Trending';
 import { GradientLayout } from './components/Layout/GradientLayout';
 import { Navigation } from './components/Navigation';
+import { Routes, Route } from 'react-router-dom';
+import Details from './components/Details';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending';
 
@@ -148,59 +150,70 @@ function App() {
 
   return (
     <GradientLayout darkMode={darkMode}>
-      <div>
-        <Header
-          darkMode={darkMode}
-          onThemeToggle={toggleTheme}
-          isPartialLoading={isPartialLoading}
-          onPartialLoadingToggle={togglePartialLoading}
-        />
-        
-        <div className="container mx-auto px-4 sm:px-6 py-6">
-          <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
-            {activeSection === 'playlist' ? (
-              <>
-                <PlaylistFetcher
-                  onFetchPlaylist={(url) => fetchPlaylist(url, true)}
-                  isLoading={isLoading}
-                  error={error}
-                />
-                <VideoGrid
-                  videos={videos}
-                  onToggleSelect={toggleSelect}
-                  onSelectAll={handleSelectAll}
-                  onMarkAsWatched={markAsWatched}
-                  isLoading={isLoading}
-                  isLoadingMore={isLoadingMore}
-                  hasMoreVideos={hasMoreVideos}
-                  onLoadMore={loadMoreVideos}
-                />
-              </>
-            ) : activeSection === 'subscriptions' ? (
-              <Subscriptions />
-            ) : activeSection === 'trending' ? (
-              <Trending apiKey={tmdbApiKey} />
-            ) : (
-              <History
-                watchedVideos={watchedVideos}
-                onToggleSelect={toggleSelect}
-                onSelectAll={handleSelectAll}
-                onRemoveFromHistory={handleRemoveFromHistory}
-                isLoading={isLoading}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
               />
-            )}
-          </main>
+              
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  {activeSection === 'playlist' ? (
+                    <>
+                      <PlaylistFetcher
+                        onFetchPlaylist={(url) => fetchPlaylist(url, true)}
+                        isLoading={isLoading}
+                        error={error}
+                      />
+                      <VideoGrid
+                        videos={videos}
+                        onToggleSelect={toggleSelect}
+                        onSelectAll={handleSelectAll}
+                        onMarkAsWatched={markAsWatched}
+                        isLoading={isLoading}
+                        isLoadingMore={isLoadingMore}
+                        hasMoreVideos={hasMoreVideos}
+                        onLoadMore={loadMoreVideos}
+                      />
+                    </>
+                  ) : activeSection === 'subscriptions' ? (
+                    <Subscriptions />
+                  ) : activeSection === 'trending' ? (
+                    <Trending apiKey={tmdbApiKey} />
+                  ) : (
+                    <History
+                      watchedVideos={watchedVideos}
+                      onToggleSelect={toggleSelect}
+                      onSelectAll={handleSelectAll}
+                      onRemoveFromHistory={handleRemoveFromHistory}
+                      isLoading={isLoading}
+                    />
+                  )}
+                </main>
 
-          <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
-            <p>© 2024 WhoJoshi Subscription Manager</p>
-          </footer>
-        </div>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2024 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
 
-        <Navigation 
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
+              <Navigation 
+                activeSection={activeSection}
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
         />
-      </div>
+        <Route
+          path="/tmdb/:type/:id"
+          element={<Details apiKey={tmdbApiKey} />}
+        />
+      </Routes>
     </GradientLayout>
   );
 }

@@ -38,8 +38,8 @@ const MovieGrid: React.FC<MovieGridProps> = ({
       {/* Render existing videos */}
       {videos.map((video, index) => {
         const isTmdb = video.tmdbId && video.tmdbType;
-        const tmdbUrl = isTmdb
-          ? `https://www.themoviedb.org/${video.tmdbType}/${video.tmdbId}`
+        const detailUrl = isTmdb
+          ? `/tmdb/${video.tmdbType}/${video.tmdbId}`
           : undefined;
 
         return (
@@ -48,7 +48,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
             className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             onClick={() => {
-              if (tmdbUrl) window.open(tmdbUrl, '_blank', 'noopener,noreferrer');
+              if (detailUrl) window.open(detailUrl, '_blank', 'noopener,noreferrer');
             }}
             style={{ cursor: isTmdb ? 'pointer' : 'default' }}
           >
