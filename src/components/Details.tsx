@@ -14,6 +14,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const { type, id } = useParams<{ type: string; id: string }>();
   const [data, setData] = useState<any>(null);
   const [credits, setCredits] = useState<any>(null);
+  const [providers, setProviders] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,12 +22,21 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
       setLoading(true);
       const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=en-US`;
       const creditsUrl = `https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${apiKey}&language=en-US`;
-      const [detailsRes, creditsRes] = await Promise.all([
+      const providersUrl = `https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${apiKey}`;
+      const [detailsRes, creditsRes, providersRes] = await Promise.all([
         fetch(url),
-        fetch(creditsUrl)
+        fetch(creditsUrl),
+        fetch(providersUrl)
       ]);
       const detailsData = await detailsRes.json();
       const creditsData = await creditsRes.json();
+      const providersData = await providersRes.json();
+      setProviders(
+        providersData.results?.IN ||
+        providersData.results?.US ||
+        Object.values(providersData.results || {})[0] ||
+        null
+      );
       setData(detailsData);
       setCredits(creditsData);
       setLoading(false);
@@ -84,6 +94,27 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <p className="mb-4 text-gray-200">
                     <span className="font-semibold">Director:</span> {director.name}
                   </p>
+                )}
+                {providers && providers.flatrate && providers.flatrate.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    {providers.flatrate.map((provider: any) => (
+                      <a
+                        key={provider.provider_id}
+                        href={providers.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:scale-110 transition-transform"
+                        title={provider.provider_name}
+                      >
+                        <img
+                          src={`https://image.tmdb.org/t/p/w45${provider.logo_path}`}
+                          alt={provider.provider_name}
+                          className="w-8 h-8 rounded shadow"
+                        />
+                        <span className="sr-only">{provider.provider_name}</span>
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
