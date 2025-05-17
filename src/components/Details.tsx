@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { Moon, Sun } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
+import { BackgroundGradient } from './ui/BackgroundGradient';
 
 interface DetailsProps {
   apiKey: string;
@@ -77,16 +78,14 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
           <div className="w-full flex flex-col md:flex-row gap-8">
             {/* Poster */}
             <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-              <div className="aspect-[2/3] w-full rounded-lg overflow-hidden bg-gray-800 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-                {data.poster_path && (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
-                    alt={data.title || data.name}
-                    className="w-full h-full object-contain"
-                    style={{ aspectRatio: '2/3' }}
-                  />
-                )}
-              </div>
+              <BackgroundGradient className="rounded-lg overflow-hidden">
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
+                  alt={data.title || data.name}
+                  className="w-full h-full object-contain"
+                  style={{ aspectRatio: '2/3' }}
+                />
+              </BackgroundGradient>
             </div>
             {/* Details */}
             <div className="flex-1 flex flex-col justify-between mt-6 md:mt-0">

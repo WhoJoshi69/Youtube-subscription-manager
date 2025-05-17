@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { BackgroundGradient } from './ui/BackgroundGradient';
 
 interface PersonDetailsProps {
   apiKey: string;
@@ -34,11 +35,13 @@ const PersonDetails: React.FC<PersonDetailsProps> = ({ apiKey }) => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Profile Image */}
         <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
-          <img
-            src={person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=256`}
-            alt={person.name}
-            className="w-full rounded-lg"
-          />
+          <BackgroundGradient className="rounded-lg overflow-hidden">
+            <img
+              src={person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=256`}
+              alt={person.name}
+              className="w-full rounded-lg"
+            />
+          </BackgroundGradient>
         </div>
         {/* Details */}
         <div className="flex-1">
