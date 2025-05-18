@@ -87,32 +87,76 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     setError(null);
 
     try {
-      const { data: entertainmentData, error: entertainmentError } = await supabase
+      // First, try to get the existing entertainment entry
+      let { data: existingEnt } = await supabase
         .from('entertainment')
-        .upsert({
-          tmdb_id: video.tmdbId,
-          title: video.title,
-          type: video.tmdbType,
-          poster_path: video.thumbnail.replace('https://image.tmdb.org/t/p/w500', ''),
-          overview: video.description,
-          release_date: video.publishedAt,
-          vote_average: video.rating
-        })
-        .select()
+        .select('id')
+        .eq('tmdb_id', video.tmdbId)
+        .eq('type', video.tmdbType)
         .single();
 
-      if (entertainmentError) throw entertainmentError;
+      let entertainmentId;
 
-      const mappings = Array.from(selectedLists).map(listId => ({
-        list_id: listId,
-        entertainment_id: entertainmentData.id
-      }));
+      if (!existingEnt) {
+        // If it doesn't exist, create it
+        const { data: newEnt, error: entertainmentError } = await supabase
+          .from('entertainment')
+          .insert({
+            tmdb_id: video.tmdbId,
+            title: video.title,
+            type: video.tmdbType,
+            poster_path: video.thumbnail.replace('https://image.tmdb.org/t/p/w500', ''),
+            overview: video.description,
+            release_date: video.publishedAt,
+            vote_average: video.rating
+          })
+          .select()
+          .single();
 
-      const { error: mappingError } = await supabase
+        if (entertainmentError) throw entertainmentError;
+        entertainmentId = newEnt.id;
+      } else {
+        entertainmentId = existingEnt.id;
+      }
+
+      // Get existing mappings for this entertainment
+      const { data: existingMappings } = await supabase
         .from('list_entertainment_map')
-        .upsert(mappings);
+        .select('list_id')
+        .eq('entertainment_id', entertainmentId);
 
-      if (mappingError) throw mappingError;
+      const existingListIds = new Set(existingMappings?.map(m => m.list_id) || []);
+
+      // Only create mappings for lists that don't already have this entertainment
+      const newMappings = Array.from(selectedLists)
+        .filter(listId => !existingListIds.has(listId))
+        .map(listId => ({
+          list_id: listId,
+          entertainment_id: entertainmentId
+        }));
+
+      if (newMappings.length > 0) {
+        const { error: mappingError } = await supabase
+          .from('list_entertainment_map')
+          .insert(newMappings);
+
+        if (mappingError) throw mappingError;
+      }
+
+      // Update the video's lists in the UI
+      const { data: updatedLists } = await supabase
+        .from('lists')
+        .select('id, name')
+        .in('id', Array.from(selectedLists));
+
+      if (updatedLists) {
+        // Update the video object with new list information
+        video.lists = (video.lists || []).concat(
+          updatedLists.filter(newList => 
+            !video.lists?.some(existingList => existingList.id === newList.id)
+          )
+        );
+      }
 
       // Reset and flip back
       setSelectedLists(new Set());
@@ -165,6 +209,11 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   const handleFlipCard = async (video: Video) => {
     setFlippedCardId(video.id);
     await fetchLists();
+    
+    // Get the current lists for this video from the video.lists property
+    const currentLists = video.lists || [];
+    // Pre-select these lists
+    setSelectedLists(new Set(currentLists.map(list => list.id)));
   };
 
   const LoadingSkeleton = () => (
@@ -329,75 +378,75 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
               {/* Back of card (Lists) */}
               <div
-                className={`absolute inset-0 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 
-                           ${flippedCardId === video.id ? '' : 'invisible'}`}
+                className={`absolute inset-0 bg-white dark:bg-gray-800 rounded-lg p-4 flex flex-col ${
+                  flippedCardId === video.id ? '' : 'invisible'
+                }`}
                 style={{ 
                   backfaceVisibility: 'hidden',
                   transform: 'rotateY(180deg)'
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-col h-full">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold">Add to Lists</h3>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFlippedCardId(null);
-                      }}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-medium">Add to Lists</h3>
+                  <button
+                    onClick={() => setFlippedCardId(null)}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
 
-                  {error && (
-                    <div className="mb-2 p-1 text-xs bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
-                      {error}
-                    </div>
-                  )}
+                {error && (
+                  <div className="text-red-500 text-xs mb-2">{error}</div>
+                )}
 
-                  <div className="flex-1 space-y-1 overflow-y-auto">
-                    {lists.map(list => (
+                <div className="flex-1 space-y-1 overflow-y-auto">
+                  {lists.map(list => {
+                    // Check if this video is in this list
+                    const isInList = video.lists?.some(vList => vList.id === list.id) || false;
+                    
+                    return (
                       <label
                         key={list.id}
                         className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer text-sm"
                       >
                         <input
                           type="checkbox"
-                          checked={selectedLists.has(list.id)}
+                          checked={selectedLists.has(list.id) || isInList}
                           onChange={() => toggleList(list.id)}
                           className="hidden"
                         />
                         <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors
-                          ${selectedLists.has(list.id)
+                          ${selectedLists.has(list.id) || isInList
                             ? 'bg-red-600 border-red-600'
                             : 'border-gray-300 dark:border-gray-600'
                           }`}
                         >
-                          {selectedLists.has(list.id) && (
+                          {(selectedLists.has(list.id) || isInList) && (
                             <Check className="w-3 h-3 text-white" />
                           )}
                         </div>
                         <span className="truncate">{list.name}</span>
                       </label>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToLists(video);
-                    }}
-                    disabled={isAddingToLists || selectedLists.size === 0}
-                    className={`mt-3 w-full px-3 py-1.5 text-sm font-medium text-white rounded-lg
-                      ${isAddingToLists || selectedLists.size === 0
-                        ? 'bg-red-400 cursor-not-allowed'
-                        : 'bg-red-600 hover:bg-red-700'
-                      }`}
-                  >
-                    {isAddingToLists ? 'Adding...' : 'Add to Lists'}
-                  </button>
+                    );
+                  })}
                 </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToLists(video);
+                  }}
+                  disabled={isAddingToLists || selectedLists.size === 0}
+                  className={`mt-3 w-full px-3 py-1.5 text-sm font-medium text-white rounded-lg
+                    ${isAddingToLists || selectedLists.size === 0
+                      ? 'bg-red-400 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                >
+                  {isAddingToLists ? 'Adding...' : 'Add to Lists'}
+                </button>
               </div>
             </motion.div>
           </div>
