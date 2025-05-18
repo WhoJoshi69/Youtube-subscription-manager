@@ -106,10 +106,29 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     }
   };
 
+  // Update the director finding logic to handle both movies and TV shows
+  const getDirectors = () => {
+    if (!credits?.crew) return [];
+    
+    if (type === 'movie') {
+      return credits.crew.filter((c: any) => c.job === 'Director');
+    } else {
+      // For TV shows, look for directors in the crew who are either:
+      // 1. Episode Director with department "Directing"
+      // 2. Series Director
+      return credits.crew.filter((c: any) => 
+        (c.department === 'Directing' && (c.job === 'Director' || c.job === 'Series Director'))
+      );
+    }
+  };
+
+  const handlePersonClick = (personId: number) => {
+    navigate(`/person/${personId}`);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Not found</div>;
 
-  const director = credits?.crew?.find((c: any) => c.job === 'Director');
   const cast = credits?.cast?.slice(0, 100) || [];
 
   return (
@@ -158,10 +177,25 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <span className="text-gray-400 text-sm">{data.runtime ? `${data.runtime} min` : ''}</span>
                 </div>
                 <p className="mb-4 text-gray-200">{data.overview}</p>
-                {director && (
-                  <p className="mb-4 text-gray-200">
-                    <span className="font-semibold">Director:</span> {director.name}
-                  </p>
+                {/* Update the director section */}
+                {getDirectors().length > 0 && (
+                  <div className="mb-4 text-gray-300">
+                    <span className="font-semibold">
+                      {type === 'movie' ? 'Director' : 'Director(s)'}: 
+                    </span>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {getDirectors().map((director: any, index: number) => (
+                        <button
+                          key={director.id}
+                          onClick={() => handlePersonClick(director.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors cursor-pointer hover:underline"
+                        >
+                          {director.name}
+                          {index < getDirectors().length - 1 ? ',' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 {providers && providers.flatrate && providers.flatrate.length > 0 && (
                   <div className="flex flex-wrap items-center gap-3 mb-4">

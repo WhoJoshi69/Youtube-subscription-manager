@@ -6,49 +6,66 @@ import { GradientLayout } from './Layout/GradientLayout';
 import { Timeline } from './ui/Timeline';
 import { motion } from 'framer-motion';
 
+interface Credit {
+  id: number;
+  title?: string;
+  name?: string;
+  release_date?: string;
+  first_air_date?: string;
+  poster_path: string | null;
+  media_type: 'movie' | 'tv';
+  character?: string;
+  job?: string;
+  department?: string;
+}
+
 const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const { id } = useParams<{ id: string }>();
   const [person, setPerson] = useState<any>(null);
-  const [credits, setCredits] = useState<any[]>([]);
+  const [credits, setCredits] = useState<Credit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'movies' | 'tv'>('movies');
+  const [activeTab, setActiveTab] = useState<'movie' | 'tv'>('movie');
   const navigate = useNavigate();
 
   // Fetch person details only once
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
     fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${apiKey}&language=en-US`)
       .then(res => res.json())
       .then(data => setPerson(data))
-      .finally(() => setLoading(false));
+      .catch(error => console.error('Error fetching person:', error));
   }, [id, apiKey]);
 
-  // Fetch credits on tab change
+  // Fetch credits whenever tab changes
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    const url =
-      activeTab === 'movies'
-        ? `https://api.themoviedb.org/3/person/${id}/movie_credits?api_key=${apiKey}&language=en-US`
-        : `https://api.themoviedb.org/3/person/${id}/tv_credits?api_key=${apiKey}&language=en-US`;
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setCredits(data.cast || []))
-      .finally(() => setLoading(false));
-  }, [id, apiKey, activeTab]);
+    setCredits([]); // Clear existing credits
 
-  const groupByYear = (items: any[]) => {
-    const grouped = items.reduce((acc: { [key: string]: any[] }, item) => {
-      const year = new Date(
-        item.release_date || item.first_air_date || ''
-      ).getFullYear();
-      const yearStr = year.toString() || 'Unknown';
+    fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${apiKey}&language=en-US`)
+      .then(res => res.json())
+      .then(data => {
+        // Filter credits based on active tab
+        const allCredits = [...(data.cast || []), ...(data.crew || [])];
+        const filteredCredits = allCredits.filter(credit => credit.media_type === activeTab);
+        setCredits(filteredCredits);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching credits:', error);
+        setLoading(false);
+      });
+  }, [id, apiKey, activeTab]); // Added activeTab as dependency
+
+  const groupByYear = (items: Credit[]) => {
+    const grouped = items.reduce((acc: { [key: string]: Credit[] }, item) => {
+      const date = item.release_date || item.first_air_date || '';
+      const year = new Date(date).getFullYear().toString() || 'Unknown';
       
-      if (!acc[yearStr]) {
-        acc[yearStr] = [];
+      if (!acc[year]) {
+        acc[year] = [];
       }
-      acc[yearStr].push(item);
+      acc[year].push(item);
       return acc;
     }, {});
 
@@ -64,7 +81,6 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
       .sort((a, b) => Number(b.year) - Number(a.year));
   };
 
-  if (loading) return <div>Loading...</div>;
   if (!person) return <div>Not found</div>;
 
   return (
@@ -72,8 +88,8 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="bg-black/60 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 flex flex-col items-center">
+          {/* Person details section */}
           <div className="w-full flex flex-col md:flex-row gap-8">
-            {/* Profile Image */}
             <div className="flex-shrink-0 mx-auto md:mx-0" style={{ width: 256 }}>
               <BackgroundGradient className="rounded-3xl overflow-hidden">
                 <img
@@ -86,7 +102,6 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                 />
               </BackgroundGradient>
             </div>
-            {/* Details */}
             <div className="flex-1 flex flex-col justify-between mt-6 md:mt-0">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">{person.name}</h1>
@@ -112,21 +127,22 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
               </div>
             </div>
           </div>
-          {/* Toggle and Grid */}
+
+          {/* Media type toggle */}
           <div className="w-full mt-8">
-            <div className="flex gap-2 mb-4 relative">
+            <div className="flex gap-2 mb-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`px-4 py-2 rounded-full font-semibold transition-colors relative ${
-                  activeTab === 'movies'
+                  activeTab === 'movie'
                     ? 'bg-red-600 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
                 }`}
-                onClick={() => setActiveTab('movies')}
+                onClick={() => setActiveTab('movie')}
               >
                 Movies
-                {activeTab === 'movies' && (
+                {activeTab === 'movie' && (
                   <motion.div
                     layoutId="activeTab"
                     className="absolute inset-0 bg-red-600 rounded-full -z-10"
@@ -156,15 +172,26 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                 )}
               </motion.button>
             </div>
+
             <motion.h2
               key={activeTab}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-xl font-semibold mb-2 text-white"
             >
-              {activeTab === 'movies' ? 'Movies' : 'TV Shows'} Timeline
+              {activeTab === 'movie' ? 'Movies' : 'TV Shows'} Timeline
             </motion.h2>
-            <Timeline data={groupByYear(credits)} type={activeTab} />
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+              </div>
+            ) : (
+              <Timeline 
+                data={groupByYear(credits)}
+                type={activeTab === 'movie' ? 'movies' : 'tv'}
+              />
+            )}
           </div>
         </div>
       </div>
