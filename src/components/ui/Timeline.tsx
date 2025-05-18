@@ -1,13 +1,15 @@
 "use client";
 import { motion, useScroll, useTransform } from "framer-motion";
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
 interface TimelineEntry {
   year: string;
   items: any[];
 }
 
-export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
+export const Timeline = ({ data, type }: { data: TimelineEntry[], type: 'movies' | 'tv' }) => {
+  const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
@@ -27,6 +29,10 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
   const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height]);
   const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
 
+  const handleItemClick = (itemId: number) => {
+    navigate(type === 'movies' ? `/tmdb/movie/${itemId}` : `/tmdb/tv/${itemId}`);
+  };
+
   return (
     <div className="w-full" ref={containerRef}>
       <div ref={ref} className="relative">
@@ -45,11 +51,12 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
               <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-white/70">
                 {yearGroup.year}
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                 {yearGroup.items.map((item) => (
                   <div
                     key={item.id}
-                    className="group relative flex flex-col bg-black/40 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                    onClick={() => handleItemClick(item.id)}
+                    className="group relative flex flex-col bg-black/40 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-105"
                   >
                     <div className="aspect-[2/3] relative w-full">
                       <img
@@ -65,25 +72,27 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="text-white text-center p-4">
-                          <div className="text-xs font-semibold">
+                        <div className="text-white text-center p-2">
+                          <div className="text-[10px] font-semibold">
                             {item.title || item.name}
                           </div>
                           {item.character && (
-                            <div className="text-[11px] italic mt-1">
+                            <div className="text-[9px] italic mt-0.5">
                               {item.character}
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="p-2">
-                      <h3 className="text-sm font-medium line-clamp-2 text-white">
+                    <div className="p-1.5">
+                      <h3 className="text-[11px] font-medium line-clamp-1 text-white">
                         {item.title || item.name}
                       </h3>
-                      <div className="text-xs text-gray-300 mt-1 italic">
-                        {item.character}
-                      </div>
+                      {item.character && (
+                        <div className="text-[9px] text-gray-300 mt-0.5 italic line-clamp-1">
+                          {item.character}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

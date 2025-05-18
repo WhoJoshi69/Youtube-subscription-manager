@@ -136,9 +136,11 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
               </button>
             </div>
             <h2 className="text-xl font-semibold mb-2 text-white">
-              {activeTab === 'movies' ? 'Movies' : 'TV Shows'} Timeline
             </h2>
-            <Timeline data={groupByYear(credits)} />
+            <Timeline 
+              data={groupByYear(credits)} 
+              type={activeTab} 
+            />
           </div>
         </div>
       </div>
