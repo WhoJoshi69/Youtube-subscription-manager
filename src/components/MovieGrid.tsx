@@ -2,7 +2,7 @@ import React from 'react';
 import { Video } from '../types';
 import { Star, Clock, List, Plus, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,11 @@ interface List {
   id: string;
   name: string;
   description: string | null;
+}
+
+interface ListInfo {
+  id: string;
+  name: string;
 }
 
 interface MovieGridProps {
@@ -53,6 +58,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   const [selectedLists, setSelectedLists] = useState<Set<string>>(new Set());
   const [isAddingToLists, setIsAddingToLists] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [videoLists, setVideoLists] = useState<Record<string, ListInfo[]>>({});
 
   const fetchLists = async () => {
     if (!user) return;
@@ -70,6 +76,72 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
     setLists(data);
   };
+
+  const fetchVideoLists = async (videos: Video[]) => {
+    if (!user) return;
+
+    try {
+      // First get all entertainment entries for these videos
+      const tmdbIds = videos.map(v => v.tmdbId);
+      const { data: entertainmentData, error: entertainmentError } = await supabase
+        .from('entertainment')
+        .select('id, tmdb_id')
+        .in('tmdb_id', tmdbIds);
+
+      if (entertainmentError) throw entertainmentError;
+
+      if (!entertainmentData?.length) return;
+
+      // Create a map of tmdb_id to entertainment.id
+      const tmdbToEntertainmentId = entertainmentData.reduce((acc, curr) => {
+        acc[curr.tmdb_id] = curr.id;
+        return acc;
+      }, {} as Record<number, string>);
+
+      // Get all list mappings for these entertainment entries
+      const { data: mappings, error: mappingsError } = await supabase
+        .from('list_entertainment_map')
+        .select(`
+          entertainment_id,
+          list:lists (
+            id,
+            name
+          )
+        `)
+        .in('entertainment_id', entertainmentData.map(e => e.id));
+
+      if (mappingsError) throw mappingsError;
+
+      // Create a map of tmdb_id to list info
+      const newVideoLists: Record<string, ListInfo[]> = {};
+      mappings.forEach(mapping => {
+        // Find the tmdb_id for this entertainment_id
+        const tmdbId = Object.entries(tmdbToEntertainmentId).find(
+          ([, entId]) => entId === mapping.entertainment_id
+        )?.[0];
+        
+        if (tmdbId && mapping.list) {
+          if (!newVideoLists[tmdbId]) {
+            newVideoLists[tmdbId] = [];
+          }
+          newVideoLists[tmdbId].push({
+            id: mapping.list.id,
+            name: mapping.list.name
+          });
+        }
+      });
+
+      setVideoLists(newVideoLists);
+    } catch (err) {
+      console.error('Error fetching video lists:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (videos.length > 0) {
+      fetchVideoLists(videos);
+    }
+  }, [videos]);
 
   const handleAddToLists = async (video: Video) => {
     if (!user || selectedLists.size === 0) return;
@@ -105,6 +177,10 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
       if (mappingError) throw mappingError;
 
+      // After successful addition, refresh the lists
+      await fetchVideoLists([video]);
+      
+      // Reset and flip back
       setSelectedLists(new Set());
       setFlippedCardId(null);
     } catch (err) {
@@ -252,6 +328,20 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {new Date(video.publishedAt).getFullYear()}
                     </p>
+                    {/* Add list names display */}
+                    {videoLists[video.tmdbId?.toString() ?? '']?.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {videoLists[video.tmdbId?.toString() ?? ''].map(list => (
+                          <span
+                            key={list.id}
+                            className="inline-block px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] rounded-full truncate max-w-[100px]"
+                            title={list.name}
+                          >
+                            {list.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
