@@ -76,42 +76,12 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
             type="text"
             className="w-full p-2 rounded-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
             placeholder="Search for actors, directors..."
-            value={selectedPerson ? selectedPerson.name : searchQuery}
+            value={searchQuery}
             onChange={e => {
-              setSelectedPerson(null);
               setSearchQuery(e.target.value);
             }}
             autoComplete="off"
           />
-          {suggestions.length > 0 && !selectedPerson && (
-            <div className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded w-full max-h-60 overflow-y-auto">
-              {suggestions.map(person => (
-                <div
-                  key={person.id}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center gap-2"
-                  onClick={() => {
-                    setSelectedPerson(person);
-                    setSearchQuery(person.name);
-                    setSuggestions([]);
-                  }}
-                >
-                  <img
-                    src={person.profile_path ? `https://image.tmdb.org/t/p/w45${person.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=444&color=fff&size=32`}
-                    alt={person.name}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span>{person.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {selectedPerson && (
-            <button
-              className="absolute right-2 top-2 text-gray-400 hover:text-red-500"
-              onClick={() => setSelectedPerson(null)}
-              title="Clear person"
-            >×</button>
-          )}
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
