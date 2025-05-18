@@ -82,11 +82,11 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   };
 
   const fetchVideoLists = async (videos: Video[]) => {
-    if (!user) return;
+    if (!user || videos.length === 0) return;
 
     try {
-      // First get all entertainment entries for these videos
-      const tmdbIds = videos.map(v => v.tmdbId);
+      // Get all entertainment entries for these videos
+      const tmdbIds = videos.map(v => v.tmdbId).filter(Boolean);
       const { data: entertainmentData, error: entertainmentError } = await supabase
         .from('entertainment')
         .select('id, tmdb_id')
@@ -141,6 +141,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     }
   };
 
+  // Refresh video lists when videos prop changes
   useEffect(() => {
     if (videos.length > 0) {
       fetchVideoLists(videos);
@@ -181,8 +182,8 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
       if (mappingError) throw mappingError;
 
-      // After successful addition, refresh the lists
-      await fetchVideoLists([video]);
+      // After successful addition, refresh the lists for ALL videos
+      await fetchVideoLists(videos);
       
       // Reset and flip back
       setSelectedLists(new Set());
@@ -192,6 +193,35 @@ const MovieGrid: React.FC<MovieGridProps> = ({
       setError('Failed to add to lists. Please try again.');
     } finally {
       setIsAddingToLists(false);
+    }
+  };
+
+  const handleRemoveFromList = async (video: Video, listId: string) => {
+    if (!user || !video.tmdbId) return;
+
+    try {
+      // First get the entertainment entry
+      const { data: entertainmentData, error: entertainmentError } = await supabase
+        .from('entertainment')
+        .select('id')
+        .eq('tmdb_id', video.tmdbId)
+        .single();
+
+      if (entertainmentError) throw entertainmentError;
+
+      // Remove the mapping
+      const { error: deleteError } = await supabase
+        .from('list_entertainment_map')
+        .delete()
+        .eq('entertainment_id', entertainmentData.id)
+        .eq('list_id', listId);
+
+      if (deleteError) throw deleteError;
+
+      // Refresh lists for ALL videos
+      await fetchVideoLists(videos);
+    } catch (err) {
+      console.error('Error removing from list:', err);
     }
   };
 
