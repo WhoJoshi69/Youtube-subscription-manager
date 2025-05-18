@@ -4,10 +4,11 @@ import {
   PlaySquare,
   Users,
   Film,
-  User
+  User,
+  List
 } from "lucide-react";
 
-type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people';
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists';
 
 interface NavigationProps {
   activeSection: Section;
@@ -45,6 +46,12 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       icon: <User className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('people'),
       isActive: activeSection === 'people'
+    },
+    {
+      title: "Lists",
+      icon: <List className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      onClick: () => onSectionChange('lists'),
+      isActive: activeSection === 'lists'
     },
   ];
 
