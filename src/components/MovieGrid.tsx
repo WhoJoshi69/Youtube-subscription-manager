@@ -328,7 +328,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {new Date(video.publishedAt).getFullYear()}
                     </p>
-                    {/* Add list names display */}
+                    {/* List names display */}
                     {videoLists[video.tmdbId?.toString() ?? '']?.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {videoLists[video.tmdbId?.toString() ?? ''].map(list => {
@@ -341,10 +341,12 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                                   ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                                   : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                               }`}
-                              title={list.name}
+                              title={isHistory ? 'Watched' : list.name}
                             >
                               {isHistory && <Check className="w-3 h-3" />}
-                              <span className="truncate">Watched</span>
+                              <span className="truncate">
+                                {isHistory ? 'Watched' : list.name}
+                              </span>
                             </span>
                           );
                         })}
