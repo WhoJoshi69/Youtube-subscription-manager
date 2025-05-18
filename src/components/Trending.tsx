@@ -65,6 +65,18 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Add state to store the scroll position
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+  // Add effect to restore scroll position when returning
+  useEffect(() => {
+    // Check if we're returning from details page
+    const isReturning = location.state?.from === 'details';
+    if (isReturning && location.state?.previousScroll) {
+      window.scrollTo(0, location.state.previousScroll);
+    }
+  }, [location]);
+
   const fetchGenres = async (type: 'movie' | 'tv') => {
     try {
       const response = await fetch(
@@ -344,6 +356,40 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       applyFilters();
     }
   };
+
+  // Modify the navigation to details
+  const handleNavigateToDetails = (type: string, id: string) => {
+    // Save current scroll position and filters state
+    const currentScroll = window.scrollY;
+    navigate(`/tmdb/${type}/${id}`, {
+      state: {
+        from: 'trending',
+        previousScroll: currentScroll,
+        filters,
+        activeTab,
+        searchQuery,
+        personFilter
+      }
+    });
+  };
+
+  // Add effect to restore state when returning
+  useEffect(() => {
+    const savedState = location.state;
+    if (savedState?.from === 'details') {
+      // Restore previous state
+      if (savedState.filters) setFilters(savedState.filters);
+      if (savedState.activeTab) setActiveTab(savedState.activeTab);
+      if (savedState.searchQuery) setSearchQuery(savedState.searchQuery);
+      if (savedState.personFilter) setPersonFilter(savedState.personFilter);
+      
+      // Refetch content with restored state
+      setPage(1);
+      setVideos([]);
+      setHasMore(true);
+      fetchContent(savedState.activeTab === 'movies' ? 'movie' : 'tv', 1);
+    }
+  }, [location.state]);
 
   return (
     <div className="w-full space-y-6">
@@ -628,6 +674,11 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         lastVideoElementRef={lastVideoElementRef}
+        onVideoClick={(video) => {
+          if (video.tmdbId && video.tmdbType) {
+            handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
+          }
+        }}
       />
     </div>
   );

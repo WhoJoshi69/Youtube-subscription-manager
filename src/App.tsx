@@ -14,7 +14,7 @@ import './styles/logo.css';
 import Trending from './components/Trending';
 import { GradientLayout } from './components/Layout/GradientLayout';
 import { Navigation } from './components/Navigation';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Details from './components/Details';
 import People from './components/People';
 import PersonDetails from './components/PersonDetails';
@@ -39,10 +39,13 @@ function App() {
       : 'home';
   });
 
+  const navigate = useNavigate();
+
   // Update URL when section changes
   // Remove setError, error is now local to playlist section
   const handleSectionChange = (section: Section) => {
     setActiveSection(section);
+    navigate(`/${section}`);
 
     // If switching to subscriptions, trigger a refresh
     if (section === 'subscriptions') {
@@ -60,16 +63,20 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.substring(1);
-      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending') {
+      if (path.startsWith('tmdb/') || path.startsWith('person/')) {
+        // Don't change active section for detail pages
+        return;
+      }
+      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'home') {
         setActiveSection(path as Section);
       } else {
-        setActiveSection('playlist');
+        setActiveSection('home');
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [navigate]);
 
   // Check for preferred color scheme
   useEffect(() => {
@@ -173,8 +180,30 @@ function App() {
           }
         />
         <Route
+          path="/trending"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <Trending apiKey={tmdbApiKey} />
+                </main>
+              </div>
+              <Navigation 
+                activeSection="trending"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
+        />
+        <Route
           path="/tmdb/:type/:id"
-          element={<Details apiKey={tmdbApiKey} />}
+          element={<Details apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
         />
         <Route path="/person/:id" element={<PersonDetails apiKey={tmdbApiKey} />} />
       </Routes>

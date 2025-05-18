@@ -8,6 +8,7 @@ interface MovieGridProps {
   isLoading: boolean;
   isLoadingMore?: boolean;
   lastVideoElementRef?: (node: HTMLDivElement) => void;
+  onVideoClick?: (video: Video) => void;
 }
 
 // Helper function to calculate days until release
@@ -30,7 +31,8 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   videos, 
   isLoading, 
   isLoadingMore, 
-  lastVideoElementRef 
+  lastVideoElementRef,
+  onVideoClick 
 }) => {
   const navigate = useNavigate();
 
@@ -72,7 +74,18 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
             className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             onClick={() => {
-              if (detailUrl) navigate(detailUrl);
+              if (onVideoClick) {
+                onVideoClick(video);
+              }
+              if (detailUrl) {
+                navigate(detailUrl, {
+                  state: {
+                    from: 'trending',
+                    scrollPosition: window.scrollY,
+                    // Add any other state you want to preserve
+                  }
+                });
+              }
             }}
             style={{ cursor: isTmdb ? 'pointer' : 'default' }}
           >

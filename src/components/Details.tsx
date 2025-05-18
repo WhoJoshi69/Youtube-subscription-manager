@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ArrowLeft } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 
@@ -24,6 +24,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [movieRecs, setMovieRecs] = useState<any[]>([]);
   const [tvRecs, setTvRecs] = useState<any[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -94,6 +95,17 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     fetchRecs();
   }, [id, type, apiKey]);
 
+  // Add back navigation handler
+  const handleBack = () => {
+    if (location.state?.from === 'trending') {
+      navigate('/trending', {
+        state: location.state // Preserve any other state data
+      });
+    } else {
+      navigate('/trending'); // Default to trending if no previous state
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!data) return <div>Not found</div>;
 
@@ -107,6 +119,14 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
         onThemeToggle={onThemeToggle}
       />
       <div className="container mx-auto px-4 py-8">
+        {/* Add back button */}
+        <button
+          onClick={handleBack}
+          className="mb-4 px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Back to Trending
+        </button>
         <div className="bg-black/60 dark:bg-gray-900/80 rounded-2xl shadow-lg p-6 flex flex-col items-center">
           {/* Poster and Details */}
           <div className="w-full flex flex-col md:flex-row gap-8">
@@ -281,7 +301,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   {/* Left: Movies */}
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {movieRecs.map(movie => (
                         <div
                           key={movie.id}
@@ -305,7 +325,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   {/* Right: TV Shows */}
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {tvRecs.map(tv => (
                         <div
                           key={tv.id}
@@ -366,7 +386,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                 {/* Left: Movies */}
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended Movies</h2>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {movieRecs.map(movie => (
                       <div
                         key={movie.id}
@@ -390,7 +410,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                 {/* Right: TV Shows */}
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold mb-2 text-white">Recommended TV Shows</h2>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {tvRecs.map(tv => (
                       <div
                         key={tv.id}
