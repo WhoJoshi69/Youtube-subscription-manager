@@ -44,15 +44,15 @@ export const useWatchHistory = () => {
   }, [lastFetchTime]);
 
   // Load watch history only once on mount
-  useEffect(() => {
-    // First try to load from local storage
-    const localHistory = getLocalWatchHistory();
-    if (localHistory.length > 0) {
-      setWatchedVideos(localHistory);
-    }
-    // Then fetch fresh data from API
-    loadHistory(true);
-  }, []);
+  // useEffect(() => {
+  //   // First try to load from local storage
+  //   const localHistory = getLocalWatchHistory();
+  //   if (localHistory.length > 0) {
+  //     setWatchedVideos(localHistory);
+  //   }
+  //   // Then fetch fresh data from API
+  //   loadHistory(true);
+  // }, []);
 
   // Add event listeners for page visibility and focus changes
   useEffect(() => {

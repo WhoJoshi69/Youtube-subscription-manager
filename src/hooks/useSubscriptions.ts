@@ -46,11 +46,11 @@ export const useSubscriptions = () => {
   }, []);
 
   // Add a new effect to fetch videos when subscriptions are loaded
-  useEffect(() => {
-    if (subscribedChannels.length > 0) {
-      fetchSubscriptionVideos();
-    }
-  }, [subscribedChannels]); // This will run when subscribedChannels changes
+  // useEffect(() => {
+  //   if (subscribedChannels.length > 0) {
+  //     fetchSubscriptionVideos();
+  //   }
+  // }, [subscribedChannels]); // This will run when subscribedChannels changes
 
   // Add a new effect to refresh videos when watch history changes
   useEffect(() => {

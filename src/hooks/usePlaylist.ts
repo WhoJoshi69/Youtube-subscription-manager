@@ -3,6 +3,10 @@ import { Video } from '../types';
 import { fetchPlaylistVideos } from '../api/youtube';
 import { addToWatchHistory, addToWatchHistoryBatch, checkWatchedStatus } from '../lib/db';
 import { isVideoWatched, addToLocalWatchHistory, getLocalWatchHistory } from '../utils/watchHistoryStorage';
+import Home from './components/Home';
+
+// Update Section type
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people';
 
 export const usePlaylist = () => {
   const [videos, setVideos] = useState<Video[]>([]);

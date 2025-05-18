@@ -23,26 +23,13 @@ import Home from './components/Home';
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
 
 function App() {
-  const {
-    videos,
-    watchedVideos,
-    isLoading,
-    isLoadingMore,
-    hasMoreVideos,
-    error,
-    fetchPlaylist,
-    loadMoreVideos,
-    toggleSelect,
-    handleSelectAll,
-    markAsWatched,
-    setWatchedVideos,
-    isPartialLoading,
-    setIsPartialLoading,
-    currentPlaylistUrl
-  } = usePlaylist();
+  // Remove global usePlaylist call
 
   const [darkMode, setDarkMode] = useState(true);
   const [session, setSession] = useState(null);
+
+  // Playlist section state for partial loading
+  const [isPartialLoading, setIsPartialLoading] = useState(true);
 
   // Initialize activeSection from URL or default to 'playlist'
   const [activeSection, setActiveSection] = useState<Section>(() => {
@@ -53,12 +40,10 @@ function App() {
   });
 
   // Update URL when section changes
+  // Remove setError, error is now local to playlist section
   const handleSectionChange = (section: Section) => {
     setActiveSection(section);
-    
-    // Clear any existing errors when switching sections
-    setError(null);
-    
+
     // If switching to subscriptions, trigger a refresh
     if (section === 'subscriptions') {
       // We'll add a small delay to ensure the component is mounted
@@ -106,21 +91,13 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  // Partial loading toggle for playlist section
   const togglePartialLoading = () => {
-    setIsPartialLoading(!isPartialLoading);
-    
-    // If we have a current playlist URL, refresh the playlist with the new setting
-    if (currentPlaylistUrl) {
-      // Small delay to ensure the state has updated
-      setTimeout(() => {
-        fetchPlaylist(currentPlaylistUrl, true);
-      }, 50);
-    }
+    setIsPartialLoading((prev) => !prev);
+    // The actual playlist refresh is handled inside the playlist section
   };
 
-  const handleRemoveFromHistory = (videoIds: string[]) => {
-    setWatchedVideos(prev => prev.filter(video => !videoIds.includes(video.id)));
-  };
+  // Remove handleRemoveFromHistory, setWatchedVideos is now local to playlist section
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -168,23 +145,10 @@ function App() {
               <div className="container mx-auto px-4 sm:px-6 py-6">
                 <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
                   {activeSection === 'playlist' ? (
-                    <>
-                      <PlaylistFetcher
-                        onFetchPlaylist={(url) => fetchPlaylist(url, true)}
-                        isLoading={isLoading}
-                        error={error}
-                      />
-                      <VideoGrid
-                        videos={videos}
-                        onToggleSelect={toggleSelect}
-                        onSelectAll={handleSelectAll}
-                        onMarkAsWatched={markAsWatched}
-                        isLoading={isLoading}
-                        isLoadingMore={isLoadingMore}
-                        hasMoreVideos={hasMoreVideos}
-                        onLoadMore={loadMoreVideos}
-                      />
-                    </>
+                    <PlaylistSection
+                      isPartialLoading={isPartialLoading}
+                      setIsPartialLoading={setIsPartialLoading}
+                    />
                   ) : activeSection === 'subscriptions' ? (
                     <Subscriptions />
                   ) : activeSection === 'trending' ? (
@@ -215,6 +179,65 @@ function App() {
         <Route path="/person/:id" element={<PersonDetails apiKey={tmdbApiKey} />} />
       </Routes>
     </GradientLayout>
+  );
+}
+
+// Move usePlaylist and all playlist logic into a dedicated component
+function PlaylistSection({
+  isPartialLoading,
+  setIsPartialLoading,
+}: {
+  isPartialLoading: boolean;
+  setIsPartialLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const {
+    videos,
+    isLoading,
+    isLoadingMore,
+    hasMoreVideos,
+    error,
+    fetchPlaylist,
+    loadMoreVideos,
+    toggleSelect,
+    handleSelectAll,
+    markAsWatched,
+    setWatchedVideos,
+    currentPlaylistUrl,
+  } = usePlaylist();
+
+  // Toggle partial loading and refresh playlist if needed
+  const handlePartialLoadingToggle = () => {
+    setIsPartialLoading((prev) => !prev);
+    if (currentPlaylistUrl) {
+      setTimeout(() => {
+        fetchPlaylist(currentPlaylistUrl, true);
+      }, 50);
+    }
+  };
+
+  // Remove from history handler (if needed elsewhere, can be lifted)
+  const handleRemoveFromHistory = (videoIds: string[]) => {
+    setWatchedVideos((prev: any[]) => prev.filter((video: any) => !videoIds.includes(video.id)));
+  };
+
+  return (
+    <>
+      <PlaylistFetcher
+        onFetchPlaylist={(url) => fetchPlaylist(url, true)}
+        isLoading={isLoading}
+        error={error}
+      />
+      <VideoGrid
+        videos={videos}
+        onToggleSelect={toggleSelect}
+        onSelectAll={handleSelectAll}
+        onMarkAsWatched={markAsWatched}
+        isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
+        hasMoreVideos={hasMoreVideos}
+        onLoadMore={loadMoreVideos}
+      />
+    </>
   );
 }
 

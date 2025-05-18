@@ -3,12 +3,11 @@ import {
   Home as HomeIcon,
   PlaySquare,
   Users,
-  History,
   Film,
   User
 } from "lucide-react";
 
-type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people';
 
 interface NavigationProps {
   activeSection: Section;
@@ -17,6 +16,12 @@ interface NavigationProps {
 
 export function Navigation({ activeSection, onSectionChange }: NavigationProps) {
   const navigationItems = [
+    {
+      title: "Home",
+      icon: <HomeIcon className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      onClick: () => onSectionChange('home'),
+      isActive: activeSection === 'home'
+    },
     {
       title: "Playlists",
       icon: <PlaySquare className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
@@ -28,12 +33,6 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       icon: <Users className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('subscriptions'),
       isActive: activeSection === 'subscriptions'
-    },
-    {
-      title: "Home",
-      icon: <HomeIcon className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
-      onClick: () => onSectionChange('history'),
-      isActive: activeSection === 'history'
     },
     {
       title: "Trending",
