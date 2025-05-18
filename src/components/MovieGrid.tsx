@@ -61,7 +61,6 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   const [isAddingToLists, setIsAddingToLists] = useState(false);
   const [isAddingToHistory, setIsAddingToHistory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [videoLists, setVideoLists] = useState<Record<string, ListInfo[]>>({});
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
 
   const fetchLists = async () => {
@@ -80,73 +79,6 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
     setLists(data);
   };
-
-  const fetchVideoLists = async (videos: Video[]) => {
-    if (!user || videos.length === 0) return;
-
-    try {
-      // Get all entertainment entries for these videos
-      const tmdbIds = videos.map(v => v.tmdbId).filter(Boolean);
-      const { data: entertainmentData, error: entertainmentError } = await supabase
-        .from('entertainment')
-        .select('id, tmdb_id')
-        .in('tmdb_id', tmdbIds);
-
-      if (entertainmentError) throw entertainmentError;
-
-      if (!entertainmentData?.length) return;
-
-      // Create a map of tmdb_id to entertainment.id
-      const tmdbToEntertainmentId = entertainmentData.reduce((acc, curr) => {
-        acc[curr.tmdb_id] = curr.id;
-        return acc;
-      }, {} as Record<number, string>);
-
-      // Get all list mappings for these entertainment entries
-      const { data: mappings, error: mappingsError } = await supabase
-        .from('list_entertainment_map')
-        .select(`
-          entertainment_id,
-          list:lists (
-            id,
-            name
-          )
-        `)
-        .in('entertainment_id', entertainmentData.map(e => e.id));
-
-      if (mappingsError) throw mappingsError;
-
-      // Create a map of tmdb_id to list info
-      const newVideoLists: Record<string, ListInfo[]> = {};
-      mappings.forEach(mapping => {
-        // Find the tmdb_id for this entertainment_id
-        const tmdbId = Object.entries(tmdbToEntertainmentId).find(
-          ([, entId]) => entId === mapping.entertainment_id
-        )?.[0];
-        
-        if (tmdbId && mapping.list) {
-          if (!newVideoLists[tmdbId]) {
-            newVideoLists[tmdbId] = [];
-          }
-          newVideoLists[tmdbId].push({
-            id: mapping.list.id,
-            name: mapping.list.name
-          });
-        }
-      });
-
-      setVideoLists(newVideoLists);
-    } catch (err) {
-      console.error('Error fetching video lists:', err);
-    }
-  };
-
-  // Refresh video lists when videos prop changes
-  useEffect(() => {
-    if (videos.length > 0) {
-      fetchVideoLists(videos);
-    }
-  }, [videos]);
 
   const handleAddToLists = async (video: Video) => {
     if (!user || selectedLists.size === 0) return;
@@ -182,9 +114,6 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 
       if (mappingError) throw mappingError;
 
-      // After successful addition, refresh the lists for ALL videos
-      await fetchVideoLists(videos);
-      
       // Reset and flip back
       setSelectedLists(new Set());
       setFlippedCardId(null);
@@ -217,9 +146,6 @@ const MovieGrid: React.FC<MovieGridProps> = ({
         .eq('list_id', listId);
 
       if (deleteError) throw deleteError;
-
-      // Refresh lists for ALL videos
-      await fetchVideoLists(videos);
     } catch (err) {
       console.error('Error removing from list:', err);
     }
@@ -239,11 +165,6 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   const handleFlipCard = async (video: Video) => {
     setFlippedCardId(video.id);
     await fetchLists();
-    
-    // Get the current lists for this video
-    const currentLists = videoLists[video.tmdbId?.toString() ?? ''] || [];
-    // Pre-select these lists
-    setSelectedLists(new Set(currentLists.map(list => list.id)));
   };
 
   const LoadingSkeleton = () => (
@@ -379,9 +300,9 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                       {releaseYear}
                     </p>
                     {/* List names display */}
-                    {videoLists[video.tmdbId?.toString() ?? '']?.length > 0 && (
+                    {video.lists && video.lists.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {videoLists[video.tmdbId?.toString() ?? ''].map(list => {
+                        {video.lists.map(list => {
                           const isHistory = list.name.toLowerCase() === 'history';
                           return (
                             <span

@@ -72,43 +72,75 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
       setIsLoading(true);
       setVideos([]); // Clear existing videos before fetching new ones
       
-      const { data, error } = await supabase
+      // First, get all entertainment IDs in the current list
+      const { data: listEntertainments, error: listError } = await supabase
         .from('list_entertainment_map')
         .select(`
-          entertainment_id,
-          entertainment (
-            tmdb_id,
-            title,
-            type,
-            poster_path,
-            release_date,
-            overview,
-            vote_average
+          entertainment_id
+        `)
+        .eq('list_id', selectedList.id);
+
+      if (listError) {
+        console.error('Error fetching list content:', listError);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!listEntertainments?.length) {
+        setVideos([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get all entertainment entries with their list memberships
+      const { data, error } = await supabase
+        .from('entertainment')
+        .select(`
+          id,
+          tmdb_id,
+          title,
+          type,
+          poster_path,
+          release_date,
+          overview,
+          vote_average,
+          list_entertainment_map!inner(
+            list:lists(
+              id,
+              name
+            )
           )
         `)
-        .eq('list_id', selectedList.id)
-        .eq('entertainment.type', activeTab === 'movies' ? 'movie' : 'tv');
+        .in('id', listEntertainments.map(le => le.entertainment_id))
+        .eq('type', activeTab === 'movies' ? 'movie' : 'tv');
 
       if (error) {
-        console.error('Error fetching list content:', error);
+        console.error('Error fetching entertainment content:', error);
         setIsLoading(false);
         return;
       }
 
       const convertedVideos: Video[] = data
-        .filter(item => item.entertainment) // Filter out any null entertainment entries
         .map(item => ({
-          id: `tmdb-${item.entertainment.tmdb_id}`,
-          tmdbId: item.entertainment.tmdb_id,
-          tmdbType: item.entertainment.type,
-          title: item.entertainment.title,
-          description: item.entertainment.overview,
-          thumbnail: item.entertainment.poster_path ? `https://image.tmdb.org/t/p/w500${item.entertainment.poster_path}` : '',
-          publishedAt: item.entertainment.release_date,
-          channelTitle: item.entertainment.type === 'movie' ? 'Movies' : 'TV Shows',
+          id: `tmdb-${item.tmdb_id}`,
+          tmdbId: item.tmdb_id,
+          tmdbType: item.type,
+          title: item.title,
+          description: item.overview,
+          thumbnail: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+          publishedAt: item.release_date,
+          channelTitle: item.type === 'movie' ? 'Movies' : 'TV Shows',
           selected: false,
           watched: false,
-          rating: item.entertainment.vote_average
+          rating: item.vote_average,
+          // Add list memberships directly to the video object
+          lists: item.list_entertainment_map
+            .map(mapping => mapping.list)
+            .filter(Boolean)
+            .map(list => ({
+              id: list.id,
+              name: list.name
+            }))
         }));
 
       setVideos(convertedVideos);
