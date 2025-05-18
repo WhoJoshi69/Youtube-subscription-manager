@@ -1,6 +1,6 @@
 import React from 'react';
 import { Video } from '../types';
-import { Star } from 'lucide-react';
+import { Star, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface MovieGridProps {
@@ -9,6 +9,22 @@ interface MovieGridProps {
   isLoadingMore?: boolean;
   lastVideoElementRef?: (node: HTMLDivElement) => void;
 }
+
+// Helper function to calculate days until release
+const getDaysUntilRelease = (releaseDate: string): string => {
+  if (!releaseDate) return '?';
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const release = new Date(releaseDate);
+  release.setHours(0, 0, 0, 0);
+  
+  const diffTime = release.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays.toString();
+};
 
 const MovieGrid: React.FC<MovieGridProps> = ({ 
   videos, 
@@ -45,6 +61,11 @@ const MovieGrid: React.FC<MovieGridProps> = ({
           ? `/tmdb/${video.tmdbType}/${video.tmdbId}`
           : undefined;
 
+        const releaseDate = new Date(video.publishedAt);
+        const today = new Date();
+        const isUnreleased = releaseDate > today;
+        const daysUntil = isUnreleased ? getDaysUntilRelease(video.publishedAt) : null;
+
         return (
           <div
             key={video.id}
@@ -71,6 +92,15 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(video.title)}&background=444&color=fff&size=256`;
                 }}
               />
+              
+              {/* Days Until Release Overlay */}
+              {isUnreleased && daysUntil && (
+                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-white text-sm font-medium flex items-center gap-1 shadow-lg">
+                  <Clock size={14} />
+                  <span>{daysUntil === '?' ? '?' : `${daysUntil}d`}</span>
+                </div>
+              )}
+
               {/* Hover Overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <div className="text-white text-center p-4">
