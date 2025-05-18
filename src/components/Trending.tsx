@@ -4,6 +4,7 @@ import { Video } from '../types';
 import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X, Clock } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FilterState {
   sortBy: string;
@@ -423,28 +424,51 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
           </button>
 
           {/* Movies/TV Shows Toggle */}
-          <button
-            onClick={() => setActiveTab('movies')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2
-              ${activeTab === 'movies'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-          >
-            <Film size={16} />
-            <span className="hidden sm:inline">Movies</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('tvshows')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2
-              ${activeTab === 'tvshows'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-          >
-            <Tv size={16} />
-            <span className="hidden sm:inline">TV Shows</span>
-          </button>
+          <div className="flex gap-2">
+            <motion.button
+              onClick={() => setActiveTab('movies')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 relative
+                ${activeTab === 'movies'
+                  ? 'text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Film size={16} />
+              <span className="hidden sm:inline">Movies</span>
+              {activeTab === 'movies' && (
+                <motion.div
+                  layoutId="activeTabBackground"
+                  className="absolute inset-0 bg-red-600 rounded-lg -z-10"
+                  initial={false}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </motion.button>
+
+            <motion.button
+              onClick={() => setActiveTab('tvshows')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 relative
+                ${activeTab === 'tvshows'
+                  ? 'text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Tv size={16} />
+              <span className="hidden sm:inline">TV Shows</span>
+              {activeTab === 'tvshows' && (
+                <motion.div
+                  layoutId="activeTabBackground"
+                  className="absolute inset-0 bg-red-600 rounded-lg -z-10"
+                  initial={false}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -669,17 +693,28 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         <div className="text-red-500 text-sm">{error}</div>
       )}
 
-      <MovieGrid 
-        videos={videos} 
-        isLoading={isLoading}
-        isLoadingMore={isLoadingMore}
-        lastVideoElementRef={lastVideoElementRef}
-        onVideoClick={(video) => {
-          if (video.tmdbId && video.tmdbType) {
-            handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
-          }
-        }}
-      />
+      {/* Wrap the MovieGrid in AnimatePresence for smooth transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <MovieGrid 
+            videos={videos} 
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            lastVideoElementRef={lastVideoElementRef}
+            onVideoClick={(video) => {
+              if (video.tmdbId && video.tmdbType) {
+                handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
+              }
+            }}
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
