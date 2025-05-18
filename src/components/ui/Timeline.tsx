@@ -81,9 +81,9 @@ export const Timeline = ({ data, type }: { data: TimelineEntry[], type: 'movies'
                           <div className="text-[10px] font-semibold">
                             {item.title || item.name}
                           </div>
-                          {(item.character || item.job) && (
-                            <div className="text-[9px] italic mt-0.5">
-                              {item.character || item.job}
+                          {item.roles && item.roles.length > 0 && (
+                            <div className="text-[9px] italic mt-0.5 text-red-400">
+                              {item.roles.join(' / ')}
                             </div>
                           )}
                         </div>
@@ -93,9 +93,9 @@ export const Timeline = ({ data, type }: { data: TimelineEntry[], type: 'movies'
                       <h3 className="text-[11px] font-medium line-clamp-1 text-white">
                         {item.title || item.name}
                       </h3>
-                      {(item.character || item.job) && (
+                      {item.roles && item.roles.length > 0 && (
                         <div className="text-[9px] text-gray-300 mt-0.5 italic line-clamp-1">
-                          {item.character || item.job}
+                          {item.roles.join(' / ')}
                         </div>
                       )}
                     </div>

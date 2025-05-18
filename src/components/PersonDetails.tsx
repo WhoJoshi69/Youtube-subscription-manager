@@ -17,6 +17,7 @@ interface Credit {
   character?: string;
   job?: string;
   department?: string;
+  roles?: string[];
 }
 
 const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
@@ -45,17 +46,49 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
     fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${apiKey}&language=en-US`)
       .then(res => res.json())
       .then(data => {
-        // Filter credits based on active tab
+        // Merge cast and crew credits
         const allCredits = [...(data.cast || []), ...(data.crew || [])];
-        const filteredCredits = allCredits.filter(credit => credit.media_type === activeTab);
-        setCredits(filteredCredits);
+        
+        // Filter by media type and merge duplicate entries
+        const mergedCredits = allCredits
+          .filter(credit => credit.media_type === activeTab)
+          .reduce((acc: { [key: string]: Credit }, credit) => {
+            const key = credit.id.toString();
+            
+            if (!acc[key]) {
+              // Initialize new entry
+              acc[key] = {
+                ...credit,
+                roles: []
+              };
+            }
+
+            // Add roles
+            if (credit.character) {
+              acc[key].roles = acc[key].roles || [];
+              if (!acc[key].roles.includes('Actor')) {
+                acc[key].roles.push('Actor');
+              }
+            }
+            
+            if (credit.job) {
+              acc[key].roles = acc[key].roles || [];
+              if (!acc[key].roles.includes(credit.job)) {
+                acc[key].roles.push(credit.job);
+              }
+            }
+
+            return acc;
+          }, {});
+
+        setCredits(Object.values(mergedCredits));
         setLoading(false);
       })
       .catch(error => {
         console.error('Error fetching credits:', error);
         setLoading(false);
       });
-  }, [id, apiKey, activeTab]); // Added activeTab as dependency
+  }, [id, apiKey, activeTab]);
 
   const groupByYear = (items: Credit[]) => {
     const grouped = items.reduce((acc: { [key: string]: Credit[] }, item) => {
