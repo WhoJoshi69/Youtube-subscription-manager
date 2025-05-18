@@ -712,6 +712,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
                 handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
               }
             }}
+            showListSelection={true}
           />
         </motion.div>
       </AnimatePresence>
