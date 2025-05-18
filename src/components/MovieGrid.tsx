@@ -331,15 +331,23 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     {/* Add list names display */}
                     {videoLists[video.tmdbId?.toString() ?? '']?.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {videoLists[video.tmdbId?.toString() ?? ''].map(list => (
-                          <span
-                            key={list.id}
-                            className="inline-block px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] rounded-full truncate max-w-[100px]"
-                            title={list.name}
-                          >
-                            {list.name}
-                          </span>
-                        ))}
+                        {videoLists[video.tmdbId?.toString() ?? ''].map(list => {
+                          const isHistory = list.name.toLowerCase() === 'history';
+                          return (
+                            <span
+                              key={list.id}
+                              className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] gap-0.5 max-w-[100px] ${
+                                isHistory
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                  : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                              }`}
+                              title={list.name}
+                            >
+                              {isHistory && <Check className="w-3 h-3" />}
+                              <span className="truncate">Watched</span>
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
