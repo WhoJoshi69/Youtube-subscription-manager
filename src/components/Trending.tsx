@@ -312,6 +312,24 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     "Find movies and shows..."
   ];
 
+  // Add a reset filters function
+  const resetFilters = () => {
+    setFilters({
+      sortBy: 'popularity.desc',
+      releaseStatus: 'all'
+    });
+    // Reset person filter if it exists
+    if (personFilter) {
+      setPersonFilter(null);
+      setPersonQuery('');
+    }
+    // Fetch content with reset filters
+    setPage(1);
+    setVideos([]);
+    setHasMore(true);
+    fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -566,18 +584,26 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
             </div>
           </div>
 
-          {/* Apply Filters Button */}
-          <button
-            onClick={() => {
-              setPage(1);
-              setVideos([]);
-              setHasMore(true);
-              fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
-            }}
-            className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Apply Filters
-          </button>
+          {/* Add buttons container at the bottom */}
+          <div className="flex gap-2">
+            <button
+              onClick={resetFilters}
+              className="flex-1 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Reset Filters
+            </button>
+            <button
+              onClick={() => {
+                setPage(1);
+                setVideos([]);
+                setHasMore(true);
+                fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+              }}
+              className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Apply Filters
+            </button>
+          </div>
         </div>
       )}
 
