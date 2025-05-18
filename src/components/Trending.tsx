@@ -330,6 +330,21 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
     fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
   };
 
+  // Add function to handle filter application
+  const applyFilters = () => {
+    setPage(1);
+    setVideos([]);
+    setHasMore(true);
+    fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
+  };
+
+  // Add keyboard event handler
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      applyFilters();
+    }
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -449,19 +464,20 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
             </select>
           </div>
 
-          {/* Year Filter */}
+          {/* Year Filter - Updated with keyboard handler */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Year</label>
             <input
               type="number"
               value={filters.year || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, year: parseInt(e.target.value) || undefined }))}
+              onKeyDown={handleKeyDown}
               placeholder="Enter year"
               className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
             />
           </div>
 
-          {/* Minimum Rating */}
+          {/* Minimum Rating - Updated with keyboard handler */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Minimum Rating</label>
             <input
@@ -471,6 +487,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
               step="0.5"
               value={filters.voteAverage || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, voteAverage: parseFloat(e.target.value) || undefined }))}
+              onKeyDown={handleKeyDown}
               placeholder="Enter minimum rating"
               className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
             />
@@ -584,7 +601,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
             </div>
           </div>
 
-          {/* Add buttons container at the bottom */}
+          {/* Buttons container */}
           <div className="flex gap-2">
             <button
               onClick={resetFilters}
@@ -593,12 +610,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
               Reset Filters
             </button>
             <button
-              onClick={() => {
-                setPage(1);
-                setVideos([]);
-                setHasMore(true);
-                fetchContent(activeTab === 'movies' ? 'movie' : 'tv', 1);
-              }}
+              onClick={applyFilters}
               className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Apply Filters
