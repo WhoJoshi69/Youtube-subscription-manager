@@ -70,6 +70,8 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
 
     const fetchListContent = async () => {
       setIsLoading(true);
+      setVideos([]); // Clear existing videos before fetching new ones
+      
       const { data, error } = await supabase
         .from('list_entertainment_map')
         .select(`
@@ -93,19 +95,21 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
         return;
       }
 
-      const convertedVideos: Video[] = data.map(item => ({
-        id: `tmdb-${item.entertainment.tmdb_id}`,
-        tmdbId: item.entertainment.tmdb_id,
-        tmdbType: item.entertainment.type,
-        title: item.entertainment.title,
-        description: item.entertainment.overview,
-        thumbnail: item.entertainment.poster_path ? `https://image.tmdb.org/t/p/w500${item.entertainment.poster_path}` : '',
-        publishedAt: item.entertainment.release_date,
-        channelTitle: item.entertainment.type === 'movie' ? 'Movies' : 'TV Shows',
-        selected: false,
-        watched: false,
-        rating: item.entertainment.vote_average
-      }));
+      const convertedVideos: Video[] = data
+        .filter(item => item.entertainment) // Filter out any null entertainment entries
+        .map(item => ({
+          id: `tmdb-${item.entertainment.tmdb_id}`,
+          tmdbId: item.entertainment.tmdb_id,
+          tmdbType: item.entertainment.type,
+          title: item.entertainment.title,
+          description: item.entertainment.overview,
+          thumbnail: item.entertainment.poster_path ? `https://image.tmdb.org/t/p/w500${item.entertainment.poster_path}` : '',
+          publishedAt: item.entertainment.release_date,
+          channelTitle: item.entertainment.type === 'movie' ? 'Movies' : 'TV Shows',
+          selected: false,
+          watched: false,
+          rating: item.entertainment.vote_average
+        }));
 
       setVideos(convertedVideos);
       setIsLoading(false);
