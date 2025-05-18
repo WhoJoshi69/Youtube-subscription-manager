@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MovieGrid from './MovieGrid';
 import { Video } from '../types';
-import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X } from 'lucide-react';
+import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X, Clock } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,7 @@ interface FilterState {
   voteCountGte?: number;
   language?: string;
   region?: string;
+  releaseStatus: 'all' | 'released' | 'unreleased';
 }
 
 interface Genre {
@@ -48,6 +49,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     sortBy: 'popularity.desc',
+    releaseStatus: 'all'
   });
   const [genres, setGenres] = useState<Genre[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +93,8 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         filters.year ||
         filters.voteAverage ||
         (filters.withGenres && filters.withGenres.length > 0) ||
-        personFilter
+        personFilter ||
+        filters.releaseStatus !== 'all'
       );
 
       // Build the base URL based on whether we're searching or getting trending
@@ -129,6 +132,21 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         }
         if (personFilter) {
           queryParams.append('with_people', personFilter.id.toString());
+        }
+        // Add release status filtering
+        const today = new Date().toISOString().split('T')[0];
+        if (filters.releaseStatus === 'released') {
+          if (type === 'movie') {
+            queryParams.append('primary_release_date.lte', today);
+          } else {
+            queryParams.append('first_air_date.lte', today);
+          }
+        } else if (filters.releaseStatus === 'unreleased') {
+          if (type === 'movie') {
+            queryParams.append('primary_release_date.gte', today);
+          } else {
+            queryParams.append('first_air_date.gte', today);
+          }
         }
         // ...add other filters as needed
       }
@@ -354,6 +372,46 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       {/* Filters Panel */}
       {showFilters && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-4">
+          {/* Release Status Toggle - Add this section first */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Clock size={16} />
+              Release Status
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, releaseStatus: 'all' }))}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${filters.releaseStatus === 'all'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, releaseStatus: 'released' }))}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${filters.releaseStatus === 'released'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Released
+              </button>
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, releaseStatus: 'unreleased' }))}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${filters.releaseStatus === 'unreleased'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Coming Soon
+              </button>
+            </div>
+          </div>
+
           {/* Sort By */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Sort By</label>
