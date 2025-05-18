@@ -1,6 +1,6 @@
 import { FloatingDock } from "./ui/floating-dock";
 import { 
-  Home,
+  Home as HomeIcon,
   PlaySquare,
   Users,
   History,
@@ -30,8 +30,8 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       isActive: activeSection === 'subscriptions'
     },
     {
-      title: "History",
-      icon: <History className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      title: "Home",
+      icon: <HomeIcon className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('history'),
       isActive: activeSection === 'history'
     },

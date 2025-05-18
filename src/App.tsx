@@ -18,6 +18,7 @@ import { Routes, Route } from 'react-router-dom';
 import Details from './components/Details';
 import People from './components/People';
 import PersonDetails from './components/PersonDetails';
+import Home from './components/Home';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
 
@@ -191,13 +192,7 @@ function App() {
                   ) : activeSection === 'people' ? (
                     <People apiKey={tmdbApiKey} />
                   ) : (
-                    <History
-                      watchedVideos={watchedVideos}
-                      onToggleSelect={toggleSelect}
-                      onSelectAll={handleSelectAll}
-                      onRemoveFromHistory={handleRemoveFromHistory}
-                      isLoading={isLoading}
-                    />
+                    <Home />
                   )}
                 </main>
 
