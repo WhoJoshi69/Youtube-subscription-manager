@@ -4,6 +4,7 @@ import { BackgroundGradient } from './ui/BackgroundGradient';
 import Header from './Header';
 import { GradientLayout } from './Layout/GradientLayout';
 import { Timeline } from './ui/Timeline';
+import { motion } from 'framer-motion';
 
 const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const { id } = useParams<{ id: string }>();
@@ -113,9 +114,11 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
           </div>
           {/* Toggle and Grid */}
           <div className="w-full mt-8">
-            <div className="flex gap-2 mb-4">
-              <button
-                className={`px-4 py-2 rounded-full font-semibold transition-colors ${
+            <div className="flex gap-2 mb-4 relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-4 py-2 rounded-full font-semibold transition-colors relative ${
                   activeTab === 'movies'
                     ? 'bg-red-600 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
@@ -123,9 +126,19 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                 onClick={() => setActiveTab('movies')}
               >
                 Movies
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full font-semibold transition-colors ${
+                {activeTab === 'movies' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-red-600 rounded-full -z-10"
+                    initial={false}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-4 py-2 rounded-full font-semibold transition-colors relative ${
                   activeTab === 'tv'
                     ? 'bg-red-600 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
@@ -133,14 +146,25 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                 onClick={() => setActiveTab('tv')}
               >
                 TV Shows
-              </button>
+                {activeTab === 'tv' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-red-600 rounded-full -z-10"
+                    initial={false}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
             </div>
-            <h2 className="text-xl font-semibold mb-2 text-white">
-            </h2>
-            <Timeline 
-              data={groupByYear(credits)} 
-              type={activeTab} 
-            />
+            <motion.h2
+              key={activeTab}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-xl font-semibold mb-2 text-white"
+            >
+              {activeTab === 'movies' ? 'Movies' : 'TV Shows'} Timeline
+            </motion.h2>
+            <Timeline data={groupByYear(credits)} type={activeTab} />
           </div>
         </div>
       </div>
