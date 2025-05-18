@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/(home|playlist|subscriptions|history|trending|people)", "destination": "/" },
+    { "source": "/tmdb/:type/:id", "destination": "/" },
+    { "source": "/person/:id", "destination": "/" },
     { "source": "/(.*)", "destination": "/" }
   ]
 } 

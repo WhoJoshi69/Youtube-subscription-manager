@@ -180,6 +180,31 @@ function App() {
           }
         />
         <Route
+          path="/people"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <People apiKey={tmdbApiKey} />
+                </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
+              <Navigation 
+                activeSection="people"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
+        />
+        <Route
           path="/trending"
           element={
             <div>
@@ -193,6 +218,9 @@ function App() {
                 <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
                   <Trending apiKey={tmdbApiKey} />
                 </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
               </div>
               <Navigation 
                 activeSection="trending"
@@ -206,6 +234,59 @@ function App() {
           element={<Details apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
         />
         <Route path="/person/:id" element={<PersonDetails apiKey={tmdbApiKey} />} />
+        <Route
+          path="/playlist"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <PlaylistSection
+                    isPartialLoading={isPartialLoading}
+                    setIsPartialLoading={setIsPartialLoading}
+                  />
+                </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
+              <Navigation 
+                activeSection="playlist"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
+        />
+        <Route
+          path="/subscriptions"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <Subscriptions />
+                </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
+              <Navigation 
+                activeSection="subscriptions"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
+        />
       </Routes>
     </GradientLayout>
   );
