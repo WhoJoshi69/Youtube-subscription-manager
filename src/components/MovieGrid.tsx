@@ -80,8 +80,19 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     setLists(data);
   };
 
+  // Modify toggleList to track both additions and removals
+  const toggleList = (listId: string) => {
+    const newSelected = new Set(selectedLists);
+    if (newSelected.has(listId)) {
+      newSelected.delete(listId);
+    } else {
+      newSelected.add(listId);
+    }
+    setSelectedLists(newSelected);
+  };
+
   const handleAddToLists = async (video: Video) => {
-    if (!user || selectedLists.size === 0) return;
+    if (!user) return;
     
     setIsAddingToLists(true);
     setError(null);
@@ -119,51 +130,60 @@ const MovieGrid: React.FC<MovieGridProps> = ({
         entertainmentId = existingEnt.id;
       }
 
-      // Get existing mappings for this entertainment
-      const { data: existingMappings } = await supabase
-        .from('list_entertainment_map')
-        .select('list_id')
-        .eq('entertainment_id', entertainmentId);
+      // Get current list memberships
+      const currentLists = new Set(video.lists?.map(list => list.id) || []);
+      
+      // Determine which lists to add and which to remove
+      const listsToAdd = Array.from(selectedLists).filter(listId => !currentLists.has(listId));
+      const listsToRemove = Array.from(currentLists).filter(listId => !selectedLists.has(listId));
 
-      const existingListIds = new Set(existingMappings?.map(m => m.list_id) || []);
-
-      // Only create mappings for lists that don't already have this entertainment
-      const newMappings = Array.from(selectedLists)
-        .filter(listId => !existingListIds.has(listId))
-        .map(listId => ({
+      // Handle additions
+      if (listsToAdd.length > 0) {
+        const newMappings = listsToAdd.map(listId => ({
           list_id: listId,
           entertainment_id: entertainmentId
         }));
 
-      if (newMappings.length > 0) {
-        const { error: mappingError } = await supabase
+        const { error: addError } = await supabase
           .from('list_entertainment_map')
           .insert(newMappings);
 
-        if (mappingError) throw mappingError;
+        if (addError) throw addError;
+      }
+
+      // Handle removals
+      if (listsToRemove.length > 0) {
+        const { error: removeError } = await supabase
+          .from('list_entertainment_map')
+          .delete()
+          .eq('entertainment_id', entertainmentId)
+          .in('list_id', listsToRemove);
+
+        if (removeError) throw removeError;
       }
 
       // Update the video's lists in the UI
-      const { data: updatedLists } = await supabase
-        .from('lists')
-        .select('id, name')
-        .in('id', Array.from(selectedLists));
+      if (listsToAdd.length > 0 || listsToRemove.length > 0) {
+        const { data: updatedLists } = await supabase
+          .from('lists')
+          .select('id, name')
+          .in('id', Array.from(selectedLists));
 
-      if (updatedLists) {
-        // Update the video object with new list information
-        video.lists = (video.lists || []).concat(
-          updatedLists.filter(newList => 
-            !video.lists?.some(existingList => existingList.id === newList.id)
-          )
-        );
+        if (updatedLists) {
+          // Update the video object with new list information
+          video.lists = updatedLists.map(list => ({
+            id: list.id,
+            name: list.name
+          }));
+        }
       }
 
       // Reset and flip back
       setSelectedLists(new Set());
       setFlippedCardId(null);
     } catch (err) {
-      console.error('Error adding to lists:', err);
-      setError('Failed to add to lists. Please try again.');
+      console.error('Error updating lists:', err);
+      setError('Failed to update lists. Please try again.');
     } finally {
       setIsAddingToLists(false);
     }
@@ -195,24 +215,13 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     }
   };
 
-  const toggleList = (listId: string) => {
-    const newSelected = new Set(selectedLists);
-    if (newSelected.has(listId)) {
-      newSelected.delete(listId);
-    } else {
-      newSelected.add(listId);
-    }
-    setSelectedLists(newSelected);
-  };
-
   // When flipping the card, pre-select the lists that the title is already in
   const handleFlipCard = async (video: Video) => {
     setFlippedCardId(video.id);
     await fetchLists();
     
-    // Get the current lists for this video from the video.lists property
+    // Pre-select current lists
     const currentLists = video.lists || [];
-    // Pre-select these lists
     setSelectedLists(new Set(currentLists.map(list => list.id)));
   };
 
@@ -388,9 +397,12 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-medium">Add to Lists</h3>
+                  <h3 className="text-sm font-medium">Edit Lists</h3>
                   <button
-                    onClick={() => setFlippedCardId(null)}
+                    onClick={() => {
+                      setFlippedCardId(null);
+                      setSelectedLists(new Set());
+                    }}
                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   >
                     <X size={16} />
@@ -402,35 +414,30 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                 )}
 
                 <div className="flex-1 space-y-1 overflow-y-auto">
-                  {lists.map(list => {
-                    // Check if this video is in this list
-                    const isInList = video.lists?.some(vList => vList.id === list.id) || false;
-                    
-                    return (
-                      <label
-                        key={list.id}
-                        className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer text-sm"
+                  {lists.map(list => (
+                    <label
+                      key={list.id}
+                      className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedLists.has(list.id)}
+                        onChange={() => toggleList(list.id)}
+                        className="hidden"
+                      />
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors
+                        ${selectedLists.has(list.id)
+                          ? 'bg-red-600 border-red-600'
+                          : 'border-gray-300 dark:border-gray-600'
+                        }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedLists.has(list.id) || isInList}
-                          onChange={() => toggleList(list.id)}
-                          className="hidden"
-                        />
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors
-                          ${selectedLists.has(list.id) || isInList
-                            ? 'bg-red-600 border-red-600'
-                            : 'border-gray-300 dark:border-gray-600'
-                          }`}
-                        >
-                          {(selectedLists.has(list.id) || isInList) && (
-                            <Check className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                        <span className="truncate">{list.name}</span>
-                      </label>
-                    );
-                  })}
+                        {selectedLists.has(list.id) && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span className="truncate">{list.name}</span>
+                    </label>
+                  ))}
                 </div>
 
                 <button
@@ -438,14 +445,14 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     e.stopPropagation();
                     handleAddToLists(video);
                   }}
-                  disabled={isAddingToLists || selectedLists.size === 0}
+                  disabled={isAddingToLists}
                   className={`mt-3 w-full px-3 py-1.5 text-sm font-medium text-white rounded-lg
-                    ${isAddingToLists || selectedLists.size === 0
+                    ${isAddingToLists
                       ? 'bg-red-400 cursor-not-allowed'
                       : 'bg-red-600 hover:bg-red-700'
                     }`}
                 >
-                  {isAddingToLists ? 'Adding...' : 'Add to Lists'}
+                  {isAddingToLists ? 'Updating...' : 'Update Lists'}
                 </button>
               </div>
             </motion.div>
