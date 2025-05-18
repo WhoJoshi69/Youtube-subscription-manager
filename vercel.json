@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/(playlist|subscriptions|history|trending)", "destination": "/" },
+    { "source": "/(home|playlist|subscriptions|history|trending|people)", "destination": "/" },
     { "source": "/(.*)", "destination": "/" }
   ]
 } 

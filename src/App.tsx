@@ -20,7 +20,7 @@ import People from './components/People';
 import PersonDetails from './components/PersonDetails';
 import Home from './components/Home';
 
-type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people';
+type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home';
 
 function App() {
   // Remove global usePlaylist call
@@ -31,12 +31,12 @@ function App() {
   // Playlist section state for partial loading
   const [isPartialLoading, setIsPartialLoading] = useState(true);
 
-  // Initialize activeSection from URL or default to 'playlist'
+  // Initialize activeSection from URL or default to 'home'
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const path = window.location.pathname.substring(1);
-    return (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending') 
+    return (path === 'home' || path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people') 
       ? path as Section 
-      : 'playlist';
+      : 'home';
   });
 
   // Update URL when section changes
