@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWatchHistory } from '../hooks/useWatchHistory';
 
 interface List {
   id: string;
@@ -53,12 +54,15 @@ const MovieGrid: React.FC<MovieGridProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { markAsWatched } = useWatchHistory();
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
   const [lists, setLists] = useState<List[]>([]);
   const [selectedLists, setSelectedLists] = useState<Set<string>>(new Set());
   const [isAddingToLists, setIsAddingToLists] = useState(false);
+  const [isAddingToHistory, setIsAddingToHistory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [videoLists, setVideoLists] = useState<Record<string, ListInfo[]>>({});
+  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
 
   const fetchLists = async () => {
     if (!user) return;
@@ -201,6 +205,17 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     setSelectedLists(newSelected);
   };
 
+  // When flipping the card, pre-select the lists that the title is already in
+  const handleFlipCard = async (video: Video) => {
+    setFlippedCardId(video.id);
+    await fetchLists();
+    
+    // Get the current lists for this video
+    const currentLists = videoLists[video.tmdbId?.toString() ?? ''] || [];
+    // Pre-select these lists
+    setSelectedLists(new Set(currentLists.map(list => list.id)));
+  };
+
   const LoadingSkeleton = () => (
     <div className="animate-pulse">
       <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
@@ -231,40 +246,45 @@ const MovieGrid: React.FC<MovieGridProps> = ({
         const today = new Date();
         const isUnreleased = releaseDate > today;
         const daysUntil = isUnreleased ? getDaysUntilRelease(video.publishedAt) : null;
+        const releaseYear = new Date(video.publishedAt).getFullYear();
 
         return (
           <div
             key={video.id}
-            ref={index === videos.length - 1 ? lastVideoElementRef : undefined}
-            className="relative h-full"
-            style={{ perspective: '1000px' }}
+            ref={index === videos.length - 1 ? lastVideoElementRef : null}
+            className="relative group"
+            onMouseEnter={() => setHoveredVideoId(video.id)}
+            onMouseLeave={() => setHoveredVideoId(null)}
           >
             <motion.div
-              initial={false}
-              animate={{ rotateY: flippedCardId === video.id ? 180 : 0 }}
-              transition={{ duration: 0.6 }}
-              style={{ transformStyle: 'preserve-3d' }}
-              className="relative w-full h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                transform: flippedCardId === video.id ? 'rotateY(180deg)' : 'rotateY(0)',
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.6s'
+              }}
             >
               {/* Front of card */}
               <div
-                className={`group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
-                  flippedCardId === video.id ? 'invisible' : ''
-                }`}
+                className={`${flippedCardId === video.id ? 'invisible' : ''}`}
                 style={{ backfaceVisibility: 'hidden' }}
               >
-                {/* Add to List Button */}
-                {showListSelection && user && (
+                {/* List add button (top right) */}
+                {showListSelection && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setFlippedCardId(video.id);
-                      setSelectedLists(new Set());
-                      fetchLists();
+                      handleFlipCard(video);
                     }}
-                    className="absolute top-2 right-2 p-2 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                    className={`absolute top-2 right-2 p-2 rounded-full text-white 
+                               transition-all duration-200 backdrop-blur-sm hover:scale-110 
+                               transform z-10 bg-black/50 hover:bg-black/70
+                               ${hoveredVideoId === video.id ? 'opacity-100' : 'opacity-0'}`}
+                    title="Add to Lists"
                   >
-                    <List className="w-4 h-4 text-white" />
+                    <List size={20} />
                   </button>
                 )}
 
@@ -326,7 +346,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                       {video.title}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(video.publishedAt).getFullYear()}
+                      {releaseYear}
                     </p>
                     {/* List names display */}
                     {videoLists[video.tmdbId?.toString() ?? '']?.length > 0 && (
@@ -356,11 +376,10 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                 </div>
               </div>
 
-              {/* Back of card */}
+              {/* Back of card (Lists) */}
               <div
-                className={`absolute inset-0 bg-white dark:bg-gray-800 rounded-lg p-4 ${
-                  flippedCardId === video.id ? 'visible' : 'invisible'
-                }`}
+                className={`absolute inset-0 bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 
+                           ${flippedCardId === video.id ? '' : 'invisible'}`}
                 style={{ 
                   backfaceVisibility: 'hidden',
                   transform: 'rotateY(180deg)'
@@ -386,7 +405,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     </div>
                   )}
 
-                  <div className="flex-1 overflow-y-auto space-y-1">
+                  <div className="flex-1 space-y-1 overflow-y-auto">
                     {lists.map(list => (
                       <label
                         key={list.id}
