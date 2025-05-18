@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 import Header from './Header';
 import { GradientLayout } from './Layout/GradientLayout';
+import { Timeline } from './ui/Timeline';
 
 const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,32 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
       .then(data => setCredits(data.cast || []))
       .finally(() => setLoading(false));
   }, [id, apiKey, activeTab]);
+
+  const groupByYear = (items: any[]) => {
+    const grouped = items.reduce((acc: { [key: string]: any[] }, item) => {
+      const year = new Date(
+        item.release_date || item.first_air_date || ''
+      ).getFullYear();
+      const yearStr = year.toString() || 'Unknown';
+      
+      if (!acc[yearStr]) {
+        acc[yearStr] = [];
+      }
+      acc[yearStr].push(item);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .map(([year, items]) => ({
+        year,
+        items: items.sort((a, b) => {
+          const dateA = new Date(a.release_date || a.first_air_date || '');
+          const dateB = new Date(b.release_date || b.first_air_date || '');
+          return dateB.getTime() - dateA.getTime();
+        }),
+      }))
+      .sort((a, b) => Number(b.year) - Number(a.year));
+  };
 
   if (loading) return <div>Loading...</div>;
   if (!person) return <div>Not found</div>;
@@ -109,58 +136,9 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
               </button>
             </div>
             <h2 className="text-xl font-semibold mb-2 text-white">
-              {activeTab === 'movies' ? 'Movies' : 'TV Shows'}
+              {activeTab === 'movies' ? 'Movies' : 'TV Shows'} Timeline
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {credits.map(item => (
-                <div
-                  key={item.id}
-                  className="group relative flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() =>
-                    navigate(
-                      activeTab === 'movies'
-                        ? `/tmdb/movie/${item.id}`
-                        : `/tmdb/tv/${item.id}`
-                    )
-                  }
-                >
-                  <div className="aspect-[2/3] relative w-full">
-                    <img
-                      src={item.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            activeTab === 'movies' ? item.title : item.name
-                          )}&background=444&color=fff&size=256`}
-                      alt={activeTab === 'movies' ? item.title : item.name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="text-white text-center p-4">
-                        <div className="text-xs font-semibold">
-                          {activeTab === 'movies' ? item.title : item.name}
-                        </div>
-                        {item.character && (
-                          <div className="text-[11px] italic mt-1">{item.character}</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-2">
-                    <h3
-                      className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-gray-100"
-                      title={activeTab === 'movies' ? item.title : item.name}
-                    >
-                      {activeTab === 'movies' ? item.title : item.name}
-                    </h3>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
-                      {item.character}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Timeline data={groupByYear(credits)} />
           </div>
         </div>
       </div>
