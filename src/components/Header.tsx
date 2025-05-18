@@ -1,5 +1,6 @@
 import React from 'react';
 import { Youtube, Moon, Sun, List, ListEnd } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -14,6 +15,12 @@ const Header: React.FC<HeaderProps> = ({
   isPartialLoading,
   onPartialLoadingToggle
 }) => {
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate('/home');
+  };
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 shadow-sm rounded-b-2xl">
       <div className="container mx-auto px-4 sm:px-6">
@@ -23,7 +30,10 @@ const Header: React.FC<HeaderProps> = ({
             <div className="p-2 rounded-xl bg-red-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
               <i className="fi fi-sr-world text-2xl text-red-600"></i>
             </div>
-            <button className="px-6 py-2 bg-black text-white rounded-lg font-bold transform hover:-translate-y-1 transition duration-400 ml-2 hidden sm:block">
+            <button 
+              onClick={handleLogoClick}
+              className="px-6 py-2 bg-black text-white rounded-lg font-bold transform hover:-translate-y-1 transition duration-400 ml-2 hidden sm:block hover:bg-gray-800"
+            >
               WhoJoshi
             </button>
           </div>
