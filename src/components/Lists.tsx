@@ -302,6 +302,7 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
                 handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
               }
             }}
+            showListSelection={true}
           />
         </motion.div>
       </AnimatePresence>

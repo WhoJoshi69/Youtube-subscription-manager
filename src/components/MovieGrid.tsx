@@ -234,7 +234,13 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     const success = await markAsWatchedTitles(
       video.tmdbId,
       video.tmdbType as 'movie' | 'tv',
-      video.title
+      video.title,
+      {
+        poster_path: video.thumbnail,
+        overview: video.description,
+        release_date: video.publishedAt,
+        vote_average: video.rating
+      }
     );
 
     if (success) {

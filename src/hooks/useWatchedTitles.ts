@@ -65,7 +65,12 @@ export const useWatchedTitles = () => {
     );
   };
 
-  const markAsWatched = async (tmdbId: number, type: 'movie' | 'tv', title: string) => {
+  const markAsWatched = async (tmdbId: number, type: 'movie' | 'tv', title: string, details?: {
+    poster_path?: string;
+    overview?: string;
+    release_date?: string;
+    vote_average?: number;
+  }) => {
     try {
       // First, get or create the entertainment entry
       let { data: existingEnt } = await supabase
@@ -84,7 +89,11 @@ export const useWatchedTitles = () => {
           .insert({
             tmdb_id: tmdbId,
             type: type,
-            title: title
+            title: title,
+            poster_path: details?.poster_path?.replace('https://image.tmdb.org/t/p/w500', ''),
+            overview: details?.overview,
+            release_date: details?.release_date,
+            vote_average: details?.vote_average
           })
           .select()
           .single();
