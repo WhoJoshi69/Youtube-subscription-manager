@@ -1,6 +1,6 @@
 import React from 'react';
 import { Video } from '../types';
-import { Star, Clock, List, Plus, Check, X } from 'lucide-react';
+import { Star, Eye, List, Plus, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -289,7 +289,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             {/* Add watched indicator */}
             {isVideoWatched && (
               <div className="absolute top-2 left-2 z-10 bg-green-500/80 text-white rounded-full p-1">
-                <Check size={16} />
+                <Eye size={16} />
               </div>
             )}
 
@@ -306,7 +306,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                            ${hoveredVideoId === video.id ? 'opacity-100' : 'opacity-0'}`}
                 title="Mark as Watched"
               >
-                <Clock size={16} />
+                <Eye size={16} />
               </button>
             )}
 
@@ -379,7 +379,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
                     {/* Days Until Release Overlay */}
                     {isUnreleased && daysUntil && (
                       <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-white text-sm font-medium flex items-center gap-1 shadow-lg">
-                        <Clock size={14} />
+                        <Eye size={14} />
                         <span>{daysUntil === '?' ? '?' : `${daysUntil}d`}</span>
                       </div>
                     )}

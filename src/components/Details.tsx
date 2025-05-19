@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
-import { Moon, Sun, ArrowLeft, Check, Clock } from 'lucide-react';
+import { Moon, Sun, ArrowLeft, Check, Clock, Eye } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 import { useWatchedTitles } from '../hooks/useWatchedTitles';
@@ -174,7 +174,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   </h1>
                   {isWatched(data.id, type as 'movie' | 'tv') ? (
                     <div className="bg-green-500/80 text-white rounded-full p-2">
-                      <Check size={20} />
+                      <Eye size={20} />
                     </div>
                   ) : (
                     <button
@@ -182,7 +182,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                       className="p-2 rounded-full text-white bg-black/50 hover:bg-black/70 transition-all"
                       title="Mark as Watched"
                     >
-                      <Clock size={20} />
+                      <Eye size={20} />
                     </button>
                   )}
                 </div>
