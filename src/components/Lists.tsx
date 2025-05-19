@@ -10,26 +10,16 @@ import { useAuth } from '../hooks/useAuth';
 import Dropdown from './ui/Dropdown';
 import Toggle from './ui/Toggle';
 
-interface ListsProps {
-  apiKey: string;
-}
+type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
+type ReleaseStatus = 'released' | 'unreleased';
 
 interface List {
   id: string;
   name: string;
-  description: string;
-  created_at: string;
-  is_default: boolean;
-  is_public: boolean;
+  description: string | null;
 }
 
-// Add sorting type
-type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
-
-// Add release status type
-type ReleaseStatus = 'released' | 'unreleased';
-
-const Lists: React.FC<ListsProps> = ({ apiKey }) => {
+const Lists: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>('movies');
   const [selectedList, setSelectedList] = useState<List | null>(null);
   const [lists, setLists] = useState<List[]>([]);
@@ -39,39 +29,10 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [releaseStatus, setReleaseStatus] = useState<ReleaseStatus>('released');
-
-  const sortOptions = [
-    {
-      value: 'newest',
-      label: 'Newest First',
-      icon: <Clock size={16} className="text-gray-500" />
-    },
-    {
-      value: 'oldest',
-      label: 'Oldest First',
-      icon: <Clock size={16} className="text-gray-500 transform rotate-180" />
-    },
-    {
-      value: 'a-z',
-      label: 'A to Z',
-      icon: <SortAsc size={16} className="text-gray-500" />
-    },
-    {
-      value: 'z-a',
-      label: 'Z to A',
-      icon: <SortAsc size={16} className="text-gray-500 transform rotate-180" />
-    },
-    {
-      value: 'rating',
-      label: 'Highest Rating',
-      icon: <Star size={16} className="text-gray-500" />
-    }
-  ];
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Fetch user's lists
   useEffect(() => {
@@ -102,64 +63,70 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
     fetchLists();
   }, [user]);
 
-  // Fetch list content when list or tab changes
+  // Fetch list content
   useEffect(() => {
     if (!selectedList) return;
 
     const fetchListContent = async () => {
       setIsLoading(true);
-      setVideos([]); // Clear existing videos before fetching new ones
       
-      // First, get all entertainment IDs in the current list
-      const { data: listEntertainments, error: listError } = await supabase
-        .from('list_entertainment_map')
-        .select(`
-          entertainment_id
-        `)
-        .eq('list_id', selectedList.id);
+      try {
+        // Get entertainment IDs for the selected list
+        const { data: mappings, error: mappingsError } = await supabase
+          .from('list_entertainment_map')
+          .select('entertainment_id')
+          .eq('list_id', selectedList.id);
 
-      if (listError) {
-        console.error('Error fetching list content:', listError);
-        setIsLoading(false);
-        return;
-      }
+        if (mappingsError) throw mappingsError;
 
-      if (!listEntertainments?.length) {
-        setVideos([]);
-        setIsLoading(false);
-        return;
-      }
+        if (!mappings?.length) {
+          setVideos([]);
+          setIsLoading(false);
+          return;
+        }
 
-      // Get all entertainment entries with their list memberships
-      const { data, error } = await supabase
-        .from('entertainment')
-        .select(`
-          id,
-          tmdb_id,
-          title,
-          type,
-          poster_path,
-          release_date,
-          overview,
-          vote_average,
-          list_entertainment_map!inner(
-            list:lists(
-              id,
-              name
-            )
-          )
-        `)
-        .in('id', listEntertainments.map(le => le.entertainment_id))
-        .eq('type', activeTab === 'movies' ? 'movie' : 'tv');
+        // Get entertainment details
+        const { data: entertainmentData, error: entertainmentError } = await supabase
+          .from('entertainment')
+          .select(`
+            id,
+            tmdb_id,
+            title,
+            type,
+            poster_path,
+            release_date,
+            overview,
+            vote_average
+          `)
+          .in('id', mappings.map(m => m.entertainment_id))
+          .eq('type', activeTab === 'movies' ? 'movie' : 'tv');
 
-      if (error) {
-        console.error('Error fetching entertainment content:', error);
-        setIsLoading(false);
-        return;
-      }
+        if (entertainmentError) throw entertainmentError;
 
-      const convertedVideos: Video[] = data
-        .map(item => ({
+        // Get list memberships
+        const { data: listMappings, error: listError } = await supabase
+          .from('list_entertainment_map')
+          .select(`
+            entertainment_id,
+            list:lists(id, name)
+          `)
+          .in('entertainment_id', mappings.map(m => m.entertainment_id));
+
+        if (listError) throw listError;
+
+        // Create a map of entertainment_id to lists
+        const listsByEntertainmentId = new Map();
+        listMappings?.forEach(mapping => {
+          if (mapping.list) {
+            if (!listsByEntertainmentId.has(mapping.entertainment_id)) {
+              listsByEntertainmentId.set(mapping.entertainment_id, []);
+            }
+            listsByEntertainmentId.get(mapping.entertainment_id).push(mapping.list);
+          }
+        });
+
+        // Convert to Video format
+        const convertedVideos: Video[] = entertainmentData.map(item => ({
           id: `tmdb-${item.tmdb_id}`,
           tmdbId: item.tmdb_id,
           tmdbType: item.type,
@@ -171,72 +138,52 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
           selected: false,
           watched: false,
           rating: item.vote_average,
-          // Add list memberships directly to the video object
-          lists: item.list_entertainment_map
-            .map(mapping => mapping.list)
-            .filter(Boolean)
-            .map(list => ({
-              id: list.id,
-              name: list.name
-            }))
+          lists: listsByEntertainmentId.get(item.id) || []
         }));
 
-      setVideos(convertedVideos);
-      setIsLoading(false);
+        setVideos(convertedVideos);
+      } catch (error) {
+        console.error('Error fetching list content:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchListContent();
   }, [selectedList, activeTab]);
 
-  const handleCreateList = async () => {
-    setError(null); // Clear any previous errors
-    
-    if (!user) {
-      setError('Please log in to create a list');
-      return;
+  const sortOptions = [
+    {
+      value: 'newest',
+      label: 'Newest First',
+      icon: <Clock size={16} className="text-gray-500" />
+    },
+    {
+      value: 'oldest',
+      label: 'Oldest First',
+      icon: <Clock size={16} className="text-gray-500 transform rotate-180" />
+    },
+    {
+      value: 'a-z',
+      label: 'A to Z',
+      icon: <SortAsc size={16} className="text-gray-500" />
+    },
+    {
+      value: 'z-a',
+      label: 'Z to A',
+      icon: <SortAsc size={16} className="text-gray-500 transform rotate-180" />
+    },
+    {
+      value: 'rating',
+      label: 'Highest Rating',
+      icon: <Star size={16} className="text-gray-500" />
     }
+  ];
 
-    if (!newListName.trim()) {
-      setError('Please enter a list name');
-      return;
-    }
-
-    const { data, error: createError } = await supabase
-      .from('lists')
-      .insert([
-        {
-          name: newListName.trim(),
-          description: newListDescription.trim(),
-          is_default: false,
-          is_public: false,
-          user_id: user.id
-        }
-      ])
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('Error creating list:', createError);
-      setError('Failed to create list. Please try again.');
-      return;
-    }
-
-    setLists(prev => [data, ...prev]);
-    setSelectedList(data);
-    setShowNewListModal(false);
-    setNewListName('');
-    setNewListDescription('');
-  };
-
-  const handleNavigateToDetails = (type: string, id: string) => {
-    navigate(`/tmdb/${type}/${id}`);
-  };
-
-  // Update getSortedVideos to include release status filtering
   const getSortedVideos = (videos: Video[]) => {
     const today = new Date();
     
-    // First filter by search query and release status
+    // Filter by search query and release status
     const filteredVideos = videos.filter(video => {
       const videoDate = new Date(video.publishedAt);
       const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -247,7 +194,7 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
       return matchesSearch && matchesStatus;
     });
 
-    // Then sort
+    // Sort
     return [...filteredVideos].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -264,6 +211,33 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
           return 0;
       }
     });
+  };
+
+  const handleCreateList = async () => {
+    if (!user || !newListName.trim()) return;
+
+    const { data, error } = await supabase
+      .from('lists')
+      .insert([
+        {
+          name: newListName.trim(),
+          description: newListDescription.trim(),
+          user_id: user.id
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating list:', error);
+      return;
+    }
+
+    setLists(prev => [data, ...prev]);
+    setSelectedList(data);
+    setShowNewListModal(false);
+    setNewListName('');
+    setNewListDescription('');
   };
 
   return (
@@ -288,11 +262,9 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
                 ? 'text-white'
                 : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             <Film size={16} />
-            <span className="hidden sm:inline">Movies</span>
+            <span>Movies</span>
             {activeTab === 'movies' && (
               <motion.div
                 layoutId="activeTabBackground"
@@ -302,7 +274,6 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
               />
             )}
           </motion.button>
-
           <motion.button
             onClick={() => setActiveTab('tvshows')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 relative
@@ -310,11 +281,9 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
                 ? 'text-white'
                 : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             <Tv size={16} />
-            <span className="hidden sm:inline">TV Shows</span>
+            <span>TV Shows</span>
             {activeTab === 'tvshows' && (
               <motion.div
                 layoutId="activeTabBackground"
@@ -327,122 +296,113 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="w-48">
-            <Dropdown
-              options={sortOptions}
-              value={sortBy}
-              onChange={(value) => setSortBy(value as SortOption)}
-              label="Sort by"
-              icon={<ArrowUpDown size={16} className="text-gray-500" />}
-            />
-          </div>
-
-          <SearchInput
-            placeholders={["Search in list..."]}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-auto"
-          />
-        </div>
-
-        <Toggle
-          options={['released', 'unreleased']}
-          value={releaseStatus}
-          onChange={(value) => setReleaseStatus(value as ReleaseStatus)}
-          icons={[
-            <Calendar size={16} />,
-            <Clock3 size={16} />
-          ]}
-        />
-      </div>
-
-      {/* Lists Selection */}
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      {/* Lists grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {lists.map(list => (
           <button
             key={list.id}
             onClick={() => setSelectedList(list)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+            className={`p-4 rounded-lg text-left transition-colors
               ${selectedList?.id === list.id
                 ? 'bg-red-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
-            {list.name}
+            <h3 className="font-medium truncate">{list.name}</h3>
+            {list.description && (
+              <p className="text-sm truncate opacity-75">{list.description}</p>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${selectedList?.id}-${activeTab}-${releaseStatus}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          <MovieGrid 
-            videos={getSortedVideos(videos)}
-            isLoading={isLoading}
-            lastVideoElementRef={() => {}}
-            onVideoClick={(video) => {
-              if (video.tmdbId && video.tmdbType) {
-                handleNavigateToDetails(video.tmdbType, video.tmdbId.toString());
-              }
-            }}
-            showListSelection={true}
-          />
-        </motion.div>
-      </AnimatePresence>
+      {selectedList && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="w-48">
+                <Dropdown
+                  options={sortOptions}
+                  value={sortBy}
+                  onChange={(value) => setSortBy(value as SortOption)}
+                  icon={<ArrowUpDown size={16} className="text-gray-500" />}
+                />
+              </div>
+
+              <SearchInput
+                placeholders={["Search in list..."]}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-auto"
+              />
+            </div>
+
+            <Toggle
+              options={['released', 'unreleased']}
+              value={releaseStatus}
+              onChange={(value) => setReleaseStatus(value as ReleaseStatus)}
+              icons={[
+                <Calendar size={16} />,
+                <Clock3 size={16} />
+              ]}
+            />
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${selectedList.id}-${activeTab}-${releaseStatus}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <MovieGrid 
+                videos={getSortedVideos(videos)}
+                isLoading={isLoading}
+                lastVideoElementRef={() => {}}
+                onVideoClick={(video) => {
+                  if (video.tmdbId && video.tmdbType) {
+                    navigate(`/tmdb/${video.tmdbType}/${video.tmdbId}`);
+                  }
+                }}
+                showListSelection={true}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </>
+      )}
 
       {/* New List Modal */}
       {showNewListModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Create New List</h3>
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
-                {error}
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={newListName}
-                  onChange={e => setNewListName(e.target.value)}
-                  className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
-                  placeholder="Enter list name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={newListDescription}
-                  onChange={e => setNewListDescription(e.target.value)}
-                  className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700"
-                  placeholder="Enter list description"
-                  rows={3}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowNewListModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateList}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white"
-                >
-                  Create List
-                </button>
-              </div>
+            <h3 className="text-lg font-medium mb-4">Create New List</h3>
+            <input
+              type="text"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="List name"
+              className="w-full p-2 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+            />
+            <textarea
+              value={newListDescription}
+              onChange={(e) => setNewListDescription(e.target.value)}
+              placeholder="Description (optional)"
+              className="w-full p-2 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 h-24"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowNewListModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateList}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700"
+              >
+                Create
+              </button>
             </div>
           </div>
         </div>
