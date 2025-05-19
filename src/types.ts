@@ -12,4 +12,8 @@ export interface Video {
   selected: boolean;
   watched: boolean;
   rating?: number; // Added for movie/show ratings
+  lists?: Array<{
+    id: string;
+    name: string;
+  }>;
 } 

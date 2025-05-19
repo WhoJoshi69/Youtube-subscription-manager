@@ -5,6 +5,7 @@ import { Film, Tv, Filter, SortDesc, Calendar, Star, Search, X, Clock } from 'lu
 import { SearchInput } from './ui/SearchInput';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 interface FilterState {
   sortBy: string;
@@ -165,6 +166,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         // ...add other filters as needed
       }
 
+      // First fetch trending content from TMDB
       const response = await fetch(
         `${baseUrl}?${queryParams.toString()}`
       );
@@ -173,30 +175,64 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
         throw new Error('Failed to fetch content');
       }
       const data = await response.json();
-      
-      // Convert TMDB format to our Video format
-      const convertedVideos: Video[] = data.results.map((item: TMDBVideo) => ({
+
+      // Get all TMDB IDs from the results
+      const tmdbIds = data.results.map(item => item.id);
+
+      // Fetch list memberships for these TMDB IDs from Supabase
+      const { data: entertainmentData, error: entError } = await supabase
+        .from('entertainment')
+        .select(`
+          id,
+          tmdb_id,
+          list_entertainment_map!inner(
+            list:lists(
+              id,
+              name
+            )
+          )
+        `)
+        .in('tmdb_id', tmdbIds)
+        .eq('type', type);
+
+      if (entError) {
+        console.error('Error fetching list memberships:', entError);
+      }
+
+      // Create a map of TMDB IDs to their list memberships
+      const listMembershipsMap = new Map();
+      entertainmentData?.forEach(ent => {
+        listMembershipsMap.set(ent.tmdb_id, 
+          ent.list_entertainment_map.map(mapping => mapping.list).filter(Boolean)
+        );
+      });
+
+      // Convert TMDB results to our Video format with list information
+      const convertedVideos: Video[] = data.results.map(item => ({
         id: `tmdb-${item.id}`,
         tmdbId: item.id,
         tmdbType: type,
-        title: item.title || item.name,
+        title: type === 'movie' ? item.title : item.name,
         description: item.overview,
-        thumbnail: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-        publishedAt: item.release_date || item.first_air_date,
+        thumbnail: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+        publishedAt: type === 'movie' ? item.release_date : item.first_air_date,
         channelTitle: type === 'movie' ? 'Movies' : 'TV Shows',
         selected: false,
         watched: false,
-        rating: item.vote_average
+        rating: item.vote_average,
+        // Add list information
+        lists: listMembershipsMap.get(item.id) || []
       }));
 
-      // Update hasMore based on TMDB's total_pages
-      setHasMore(pageNum < data.total_pages);
+      // Update videos state
+      if (isLoadingMore) {
+        setVideos(prev => [...prev, ...convertedVideos]);
+      } else {
+        setVideos(convertedVideos);
+      }
 
-      // If loading more, append to existing videos
-      // If new search (page 1), replace existing videos
-      setVideos(prev => 
-        isLoadingMore ? [...prev, ...convertedVideos] : convertedVideos
-      );
+      setHasMore(pageNum < data.total_pages);
+      setPage(pageNum);
 
       if (personFilter && activeTab === 'tvshows') {
         setIsLoading(true);
