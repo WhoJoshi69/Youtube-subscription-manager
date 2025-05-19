@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Dropdown from './ui/Dropdown';
 import Toggle from './ui/Toggle';
+import AnimatedButton from './ui/AnimatedButton';
 
 type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
 type ReleaseStatus = 'released' | 'unreleased';
@@ -365,16 +366,13 @@ const Lists: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                 ]}
               />
 
-              <button
+              <AnimatedButton
                 onClick={randomPick ? resetRandomPick : handleRandomPick}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2
-                  ${randomPick 
-                    ? 'bg-gray-600 hover:bg-gray-700 text-white' 
-                    : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                className={randomPick ? 'opacity-75 hover:opacity-100' : ''}
               >
                 <Shuffle size={16} />
-                {randomPick ? 'Reset' : 'Pick Random'}
-              </button>
+                <span className="text-sm">{randomPick ? 'Reset' : 'Random'}</span>
+              </AnimatedButton>
             </div>
           </div>
 
