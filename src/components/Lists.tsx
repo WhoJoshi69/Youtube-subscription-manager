@@ -342,7 +342,6 @@ const Lists: React.FC<{ apiKey: string }> = ({ apiKey }) => {
                   options={sortOptions}
                   value={sortBy}
                   onChange={(value) => setSortBy(value as SortOption)}
-                  label="Sort by"
                   icon={<ArrowUpDown size={16} className="text-gray-500" />}
                 />
               </div>
