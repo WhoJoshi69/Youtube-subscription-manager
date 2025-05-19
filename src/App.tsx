@@ -20,6 +20,7 @@ import People from './components/People';
 import PersonDetails from './components/PersonDetails';
 import Home from './components/Home';
 import Lists from './components/Lists';
+import Collection from './components/Collection';
 
 type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home' | 'lists';
 
@@ -321,6 +322,10 @@ function App() {
               />
             </div>
           }
+        />
+        <Route
+          path="/collection/:id"
+          element={<Collection apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
         />
       </Routes>
     </GradientLayout>
