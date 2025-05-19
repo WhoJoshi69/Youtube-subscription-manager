@@ -41,7 +41,7 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    setCredits([]); // Clear existing credits
+    setCredits([]);
 
     fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${apiKey}&language=en-US&include_adult=true`)
       .then(res => res.json())
@@ -63,14 +63,15 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
               };
             }
 
-            // Add roles
+            // Add character name instead of "Actor"
             if (credit.character) {
               acc[key].roles = acc[key].roles || [];
-              if (!acc[key].roles.includes('Actor')) {
-                acc[key].roles.push('Actor');
+              if (!acc[key].roles.includes(credit.character)) {
+                acc[key].roles.push(credit.character);
               }
             }
             
+            // Add crew roles (jobs)
             if (credit.job) {
               acc[key].roles = acc[key].roles || [];
               if (!acc[key].roles.includes(credit.job)) {
