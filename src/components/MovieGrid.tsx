@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWatchHistory } from '../hooks/useWatchHistory';
+import { useWatchedTitles } from '../hooks/useWatchedTitles';
 
 interface List {
   id: string;
@@ -55,6 +56,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { markAsWatched } = useWatchHistory();
+  const { isWatched, markAsWatched: markAsWatchedTitles } = useWatchedTitles();
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
   const [lists, setLists] = useState<List[]>([]);
   const [selectedLists, setSelectedLists] = useState<Set<string>>(new Set());
@@ -225,6 +227,24 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     setSelectedLists(new Set(currentLists.map(list => list.id)));
   };
 
+  // Add this function to handle marking as watched
+  const handleMarkAsWatched = async (video: Video) => {
+    if (!video.tmdbId || !video.tmdbType) return;
+    
+    const success = await markAsWatchedTitles(
+      video.tmdbId,
+      video.tmdbType as 'movie' | 'tv',
+      video.title
+    );
+
+    if (success) {
+      // Update the UI if needed
+      setVideos(prev => prev.map(v => 
+        v.id === video.id ? { ...v, watched: true } : v
+      ));
+    }
+  };
+
   const LoadingSkeleton = () => (
     <div className="animate-pulse">
       <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
@@ -247,6 +267,7 @@ const MovieGrid: React.FC<MovieGridProps> = ({
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {videos.map((video, index) => {
         const isTmdb = video.tmdbId && video.tmdbType;
+        const isVideoWatched = isTmdb && isWatched(video.tmdbId, video.tmdbType as 'movie' | 'tv');
         const detailUrl = isTmdb
           ? `/tmdb/${video.tmdbType}/${video.tmdbId}`
           : undefined;
@@ -265,6 +286,30 @@ const MovieGrid: React.FC<MovieGridProps> = ({
             onMouseEnter={() => setHoveredVideoId(video.id)}
             onMouseLeave={() => setHoveredVideoId(null)}
           >
+            {/* Add watched indicator */}
+            {isVideoWatched && (
+              <div className="absolute top-2 left-2 z-10 bg-green-500/80 text-white rounded-full p-1">
+                <Check size={16} />
+              </div>
+            )}
+
+            {/* Add mark as watched button */}
+            {!isVideoWatched && isTmdb && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAsWatched(video);
+                }}
+                className={`absolute top-2 left-2 p-2 rounded-full text-white 
+                           transition-all duration-200 backdrop-blur-sm hover:scale-110 
+                           transform z-10 bg-black/50 hover:bg-black/70
+                           ${hoveredVideoId === video.id ? 'opacity-100' : 'opacity-0'}`}
+                title="Mark as Watched"
+              >
+                <Clock size={16} />
+              </button>
+            )}
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

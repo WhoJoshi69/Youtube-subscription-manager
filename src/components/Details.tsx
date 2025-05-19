@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
-import { Moon, Sun, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, ArrowLeft, Check, Clock } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
 import { BackgroundGradient } from './ui/BackgroundGradient';
+import { useWatchedTitles } from '../hooks/useWatchedTitles';
 
 interface DetailsProps {
   apiKey: string;
@@ -25,6 +26,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [tvRecs, setTvRecs] = useState<any[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isWatched, markAsWatched } = useWatchedTitles();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -163,12 +165,27 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
             {/* Details */}
             <div className="flex-1 flex flex-col justify-between mt-6 md:mt-0">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
-                  {data.title || data.name}
-                  <span className="text-gray-400 font-normal ml-2">
-                    ({(data.release_date || data.first_air_date || '').slice(0, 4)})
-                  </span>
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
+                    {data.title || data.name}
+                    <span className="text-gray-400 font-normal ml-2">
+                      ({(data.release_date || data.first_air_date || '').slice(0, 4)})
+                    </span>
+                  </h1>
+                  {isWatched(data.id, type as 'movie' | 'tv') ? (
+                    <div className="bg-green-500/80 text-white rounded-full p-2">
+                      <Check size={20} />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => markAsWatched(data.id, type as 'movie' | 'tv', data.title || data.name)}
+                      className="p-2 rounded-full text-white bg-black/50 hover:bg-black/70 transition-all"
+                      title="Mark as Watched"
+                    >
+                      <Clock size={20} />
+                    </button>
+                  )}
+                </div>
                 <div className="text-gray-300 mb-2">
                   {data.genres?.map((g: any) => g.name).join(', ')}
                 </div>
