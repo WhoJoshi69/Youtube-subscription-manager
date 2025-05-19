@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Film, Tv, Filter, Plus, ListPlus, ArrowUpDown, Clock, SortAsc, Star } from 'lucide-react';
+import { Film, Tv, Filter, Plus, ListPlus, ArrowUpDown, Clock, SortAsc, Star, Calendar, Clock3 } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
 import MovieGrid from './MovieGrid';
 import { Video } from '../types';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Dropdown from './ui/Dropdown';
+import Toggle from './ui/Toggle';
 
 interface ListsProps {
   apiKey: string;
@@ -25,6 +26,9 @@ interface List {
 // Add sorting type
 type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
 
+// Add release status type
+type ReleaseStatus = 'released' | 'unreleased';
+
 const Lists: React.FC<ListsProps> = ({ apiKey }) => {
   const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>('movies');
   const [selectedList, setSelectedList] = useState<List | null>(null);
@@ -39,6 +43,7 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [releaseStatus, setReleaseStatus] = useState<ReleaseStatus>('released');
 
   const sortOptions = [
     {
@@ -227,12 +232,22 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
     navigate(`/tmdb/${type}/${id}`);
   };
 
-  // Add sorting function
+  // Update getSortedVideos to include release status filtering
   const getSortedVideos = (videos: Video[]) => {
-    const filteredVideos = videos.filter(video => 
-      video.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const today = new Date();
+    
+    // First filter by search query and release status
+    const filteredVideos = videos.filter(video => {
+      const videoDate = new Date(video.publishedAt);
+      const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = releaseStatus === 'released' 
+        ? videoDate <= today 
+        : videoDate > today;
+      
+      return matchesSearch && matchesStatus;
+    });
 
+    // Then sort
     return [...filteredVideos].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -312,48 +327,58 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="w-48">
-          <Dropdown
-            options={sortOptions}
-            value={sortBy}
-            onChange={(value) => setSortBy(value as SortOption)}
-            icon={<ArrowUpDown size={16} className="text-gray-500" />}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="w-48">
+            <Dropdown
+              options={sortOptions}
+              value={sortBy}
+              onChange={(value) => setSortBy(value as SortOption)}
+              label="Sort by"
+              icon={<ArrowUpDown size={16} className="text-gray-500" />}
+            />
+          </div>
+
+          <SearchInput
+            placeholders={["Search in list..."]}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-auto"
           />
         </div>
 
-        {/* Lists Selection */}
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {lists.map(list => (
-            <button
-              key={list.id}
-              onClick={() => setSelectedList(list)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
-                ${selectedList?.id === list.id
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-            >
-              {list.name}
-            </button>
-          ))}
-        </div>
+        <Toggle
+          options={['released', 'unreleased']}
+          value={releaseStatus}
+          onChange={(value) => setReleaseStatus(value as ReleaseStatus)}
+          icons={[
+            <Calendar size={16} />,
+            <Clock3 size={16} />
+          ]}
+        />
       </div>
 
-      {/* Search */}
-      <div className="relative flex-1 sm:flex-initial sm:w-96">
-        <SearchInput
-          placeholders={["Search in list..."]}
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
-        />
+      {/* Lists Selection */}
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {lists.map(list => (
+          <button
+            key={list.id}
+            onClick={() => setSelectedList(list)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+              ${selectedList?.id === list.id
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+          >
+            {list.name}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={`${selectedList?.id}-${activeTab}`}
+          key={`${selectedList?.id}-${activeTab}-${releaseStatus}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
