@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
-import { Moon, Sun, ArrowLeft, Check, Clock, Eye } from 'lucide-react';
+import { Moon, Sun, ArrowLeft, Check, Clock, Eye, Play } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 import { useWatchedTitles } from '../hooks/useWatchedTitles';
@@ -24,6 +24,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const [activeTab, setActiveTab] = useState<'cast' | 'episodes' | 'recommendations'>('cast');
   const [movieRecs, setMovieRecs] = useState<any[]>([]);
   const [tvRecs, setTvRecs] = useState<any[]>([]);
+  const [trailer, setTrailer] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { isWatched, markAsWatched } = useWatchedTitles();
@@ -96,6 +97,22 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     };
     fetchRecs();
   }, [id, type, apiKey]);
+
+  useEffect(() => {
+    const fetchTrailer = async () => {
+      try {
+        const videosUrl = `https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${apiKey}&language=en-US`;
+        const res = await fetch(videosUrl);
+        const data = await res.json();
+        // Find the first trailer
+        const trailerVideo = data.results?.find(v => v.type === 'Trailer');
+        setTrailer(trailerVideo || null);
+      } catch (error) {
+        console.error('Error fetching trailer:', error);
+      }
+    };
+    fetchTrailer();
+  }, [type, id, apiKey]);
 
   // Add back navigation handler
   const handleBack = () => {
@@ -194,6 +211,23 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   <span className="text-gray-400 text-sm">{data.runtime ? `${data.runtime} min` : ''}</span>
                 </div>
                 <p className="mb-4 text-gray-200">{data.overview}</p>
+                
+                {/* Add Small Trailer Section */}
+                {trailer && (
+                  <div className="mb-4">
+                    <div className="relative w-64 aspect-video rounded-lg overflow-hidden bg-black/20">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${trailer.key}`}
+                        title={`${data.title || data.name} Trailer`}
+                        className="absolute inset-0 w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 {/* Update the director section */}
                 {getDirectors().length > 0 && (
                   <div className="mb-4 text-gray-300">
