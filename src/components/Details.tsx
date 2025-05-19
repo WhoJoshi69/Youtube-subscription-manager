@@ -29,7 +29,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   useEffect(() => {
     const fetchDetails = async () => {
       setLoading(true);
-      const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=en-US`;
+      const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=en-US&include_adult=true`;
       const creditsUrl = `https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${apiKey}&language=en-US`;
       const providersUrl = `https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${apiKey}`;
       const [detailsRes, creditsRes, providersRes] = await Promise.all([
@@ -75,19 +75,19 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
     if (!id || !type) return;
     const fetchRecs = async () => {
       if (type === 'movie') {
-        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}`);
+        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}&include_adult=true`);
         const movieData = await movieRes.json();
         setMovieRecs(movieData.results || []);
         // Optionally, fetch TV recs for the right grid
-        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}`);
+        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}&include_adult=true`);
         const tvData = await tvRes.json();
         setTvRecs(tvData.results || []);
       } else if (type === 'tv') {
-        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}`);
+        const tvRes = await fetch(`https://api.themoviedb.org/3/tv/${id}/recommendations?api_key=${apiKey}&include_adult=true`);
         const tvData = await tvRes.json();
         setTvRecs(tvData.results || []);
         // Optionally, fetch movie recs for the left grid
-        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}`);
+        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${apiKey}&include_adult=true`);
         const movieData = await movieRes.json();
         setMovieRecs(movieData.results || []);
       }

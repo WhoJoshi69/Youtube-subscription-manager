@@ -121,6 +121,7 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       const queryParams = new URLSearchParams({
         api_key: apiKey,
         page: pageNum.toString(),
+        include_adult: 'true',
       });
 
       // Add search query if searching

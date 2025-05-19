@@ -31,7 +31,7 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   // Fetch person details only once
   useEffect(() => {
     if (!id) return;
-    fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${apiKey}&language=en-US`)
+    fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${apiKey}&language=en-US&include_adult=true`)
       .then(res => res.json())
       .then(data => setPerson(data))
       .catch(error => console.error('Error fetching person:', error));
@@ -43,7 +43,7 @@ const PersonDetails: React.FC<{ apiKey: string }> = ({ apiKey }) => {
     setLoading(true);
     setCredits([]); // Clear existing credits
 
-    fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${apiKey}&language=en-US`)
+    fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${apiKey}&language=en-US&include_adult=true`)
       .then(res => res.json())
       .then(data => {
         // Merge cast and crew credits
