@@ -13,14 +13,31 @@ import {
   checkWatchedStatus
 } from '../lib/db';
 import { isVideoWatched, addToLocalWatchHistory, getLocalWatchHistory } from '../utils/watchHistoryStorage';
+import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
 
 export const useSubscriptions = () => {
-  const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>([]);
-  const [videos, setVideos] = useState<Video[]>([]);
+  // Load initial state from localStorage
+  const initialState = loadState(STORAGE_KEYS.SUBSCRIPTIONS) || {
+    subscribedChannels: [],
+    videos: [],
+    filteredChannels: []
+  };
+
+  const [subscribedChannels, setSubscribedChannels] = useState<Channel[]>(initialState.subscribedChannels);
+  const [videos, setVideos] = useState<Video[]>(initialState.videos);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filteredChannels, setFilteredChannels] = useState<string[]>([]);
+  const [filteredChannels, setFilteredChannels] = useState<string[]>(initialState.filteredChannels);
   
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveState(STORAGE_KEYS.SUBSCRIPTIONS, {
+      subscribedChannels,
+      videos,
+      filteredChannels
+    });
+  }, [subscribedChannels, videos, filteredChannels]);
+
   // Load subscriptions and filtered channels on mount
   useEffect(() => {
     const loadData = async () => {

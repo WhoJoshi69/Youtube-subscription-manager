@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchInput } from './ui/SearchInput';
 import { useNavigate } from 'react-router-dom';
+import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
 
 interface Person {
   id: number;
@@ -14,12 +15,23 @@ interface PeopleProps {
 }
 
 const People: React.FC<PeopleProps> = ({ apiKey }) => {
-  const [people, setPeople] = useState<Person[]>([]);
+  const initialState = loadState(STORAGE_KEYS.PEOPLE) || {
+    people: [],
+    searchQuery: '',
+    filters: {
+      sortBy: 'popularity.desc'
+    },
+    page: 1
+  };
+
+  const [people, setPeople] = useState(initialState.people);
+  const [searchQuery, setSearchQuery] = useState(initialState.searchQuery);
+  const [filters, setFilters] = useState(initialState.filters);
+  const [page, setPage] = useState(initialState.page);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [selectedPerson, setSelectedPerson] = useState<any>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
   const observer = useRef<IntersectionObserver | null>(null);
@@ -66,6 +78,16 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
   useEffect(() => {
     setPage(1);
   }, [searchQuery]);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveState(STORAGE_KEYS.PEOPLE, {
+      people,
+      searchQuery,
+      filters,
+      page
+    });
+  }, [people, searchQuery, filters, page]);
 
   return (
     <div className="w-full space-y-6">

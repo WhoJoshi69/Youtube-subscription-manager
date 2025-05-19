@@ -3,20 +3,39 @@ import { Video } from '../types';
 import { fetchPlaylistVideos } from '../api/youtube';
 import { addToWatchHistory, addToWatchHistoryBatch, checkWatchedStatus } from '../lib/db';
 import { isVideoWatched, addToLocalWatchHistory, getLocalWatchHistory } from '../utils/watchHistoryStorage';
+import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
 import Home from './components/Home';
 
 // Update Section type
 type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people';
 
 export const usePlaylist = () => {
-  const [videos, setVideos] = useState<Video[]>([]);
+  // Load initial state from localStorage
+  const initialState = loadState(STORAGE_KEYS.PLAYLIST) || {
+    videos: [],
+    nextPageToken: undefined,
+    currentPlaylistUrl: null,
+    isPartialLoading: true
+  };
+
+  const [videos, setVideos] = useState<Video[]>(initialState.videos);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(initialState.nextPageToken);
   const [hasMoreVideos, setHasMoreVideos] = useState(true);
-  const [currentPlaylistUrl, setCurrentPlaylistUrl] = useState<string | null>(null);
-  const [isPartialLoading, setIsPartialLoading] = useState(true);
+  const [currentPlaylistUrl, setCurrentPlaylistUrl] = useState<string | null>(initialState.currentPlaylistUrl);
+  const [isPartialLoading, setIsPartialLoading] = useState(initialState.isPartialLoading);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveState(STORAGE_KEYS.PLAYLIST, {
+      videos,
+      nextPageToken,
+      currentPlaylistUrl,
+      isPartialLoading
+    });
+  }, [videos, nextPageToken, currentPlaylistUrl, isPartialLoading]);
 
   // Add effect to refresh videos when watch history changes
   useEffect(() => {

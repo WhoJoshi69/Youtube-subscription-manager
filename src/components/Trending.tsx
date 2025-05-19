@@ -6,6 +6,7 @@ import { SearchInput } from './ui/SearchInput';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
 
 interface FilterState {
   sortBy: string;
@@ -41,34 +42,43 @@ interface TMDBVideo {
 }
 
 const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
-  const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>('movies');
-  const [videos, setVideos] = useState<Video[]>([]);
+  const initialState = loadState(STORAGE_KEYS.TRENDING) || {
+    activeTab: 'movies',
+    videos: [],
+    page: 1,
+    filters: {
+      sortBy: 'popularity.desc',
+      releaseStatus: 'all'
+    },
+    searchQuery: '',
+    personFilter: null,
+    selectedPerson: null,
+    scrollPosition: 0
+  };
+
+  const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>(initialState.activeTab);
+  const [videos, setVideos] = useState<Video[]>(initialState.videos);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialState.page);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    sortBy: 'popularity.desc',
-    releaseStatus: 'all'
-  });
+  const [filters, setFilters] = useState<FilterState>(initialState.filters);
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialState.searchQuery);
   const [isSearching, setIsSearching] = useState(false);
   const [personQuery, setPersonQuery] = useState('');
   const [personSuggestions, setPersonSuggestions] = useState<any[]>([]);
-  const [personFilter, setPersonFilter] = useState<{id: number, name: string} | null>(null);
-  const [selectedPerson, setSelectedPerson] = useState<{id: number, name: string} | null>(null);
+  const [personFilter, setPersonFilter] = useState(initialState.personFilter);
+  const [selectedPerson, setSelectedPerson] = useState(initialState.selectedPerson);
   const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
+  const [scrollPosition, setScrollPosition] = useState(initialState.scrollPosition);
   
   // Reference to track the current active tab for cleanup
   const currentTab = useRef(activeTab);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Add state to store the scroll position
-  const [scrollPosition, setScrollPosition] = useState(0);
 
   // Add effect to restore scroll position when returning
   useEffect(() => {
@@ -78,6 +88,37 @@ const Trending: React.FC<TrendingProps> = ({ apiKey }) => {
       window.scrollTo(0, location.state.previousScroll);
     }
   }, [location]);
+
+  // Save state to localStorage whenever important state changes
+  useEffect(() => {
+    saveState(STORAGE_KEYS.TRENDING, {
+      activeTab,
+      videos,
+      page,
+      filters,
+      searchQuery,
+      personFilter,
+      selectedPerson,
+      scrollPosition
+    });
+  }, [activeTab, videos, page, filters, searchQuery, personFilter, selectedPerson, scrollPosition]);
+
+  // Save scroll position before unmounting
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore scroll position when component mounts
+  useEffect(() => {
+    if (scrollPosition > 0) {
+      window.scrollTo(0, scrollPosition);
+    }
+  }, []);
 
   const fetchGenres = async (type: 'movie' | 'tv') => {
     try {

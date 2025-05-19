@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import Dropdown from './ui/Dropdown';
 import Toggle from './ui/Toggle';
 import AnimatedButton from './ui/AnimatedButton';
+import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
 
 type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
 type ReleaseStatus = 'released' | 'unreleased';
@@ -21,20 +22,39 @@ interface List {
 }
 
 const Lists: React.FC<{ apiKey: string }> = ({ apiKey }) => {
+  const initialState = loadState(STORAGE_KEYS.LISTS) || {
+    lists: [],
+    activeList: null,
+    searchQuery: '',
+    sortBy: 'name'
+  };
+
+  const [lists, setLists] = useState(initialState.lists);
+  const [activeList, setActiveList] = useState(initialState.activeList);
+  const [searchQuery, setSearchQuery] = useState(initialState.searchQuery);
+  const [sortBy, setSortBy] = useState(initialState.sortBy);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>('movies');
   const [selectedList, setSelectedList] = useState<List | null>(null);
-  const [lists, setLists] = useState<List[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showNewListModal, setShowNewListModal] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [releaseStatus, setReleaseStatus] = useState<ReleaseStatus>('released');
   const [randomPick, setRandomPick] = useState<Video | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveState(STORAGE_KEYS.LISTS, {
+      lists,
+      activeList,
+      searchQuery,
+      sortBy
+    });
+  }, [lists, activeList, searchQuery, sortBy]);
 
   // Fetch user's lists
   useEffect(() => {
