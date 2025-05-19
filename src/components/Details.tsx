@@ -240,7 +240,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                     onClick={() => navigate(`/collection/${data.belongs_to_collection.id}`)}
                     className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
                   >
-                    See Full Collection: {data.belongs_to_collection.name}
+                    {data.belongs_to_collection.name}
                   </button>
                 )}
               </div>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Film, Tv, Filter, Plus, ListPlus } from 'lucide-react';
+import { Film, Tv, Filter, Plus, ListPlus, ArrowUpDown, Clock, SortAsc, Star } from 'lucide-react';
 import { SearchInput } from './ui/SearchInput';
 import MovieGrid from './MovieGrid';
 import { Video } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Dropdown from './ui/Dropdown';
 
 interface ListsProps {
   apiKey: string;
@@ -21,6 +22,9 @@ interface List {
   is_public: boolean;
 }
 
+// Add sorting type
+type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a' | 'rating';
+
 const Lists: React.FC<ListsProps> = ({ apiKey }) => {
   const [activeTab, setActiveTab] = useState<'movies' | 'tvshows'>('movies');
   const [selectedList, setSelectedList] = useState<List | null>(null);
@@ -34,6 +38,35 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+
+  const sortOptions = [
+    {
+      value: 'newest',
+      label: 'Newest First',
+      icon: <Clock size={16} className="text-gray-500" />
+    },
+    {
+      value: 'oldest',
+      label: 'Oldest First',
+      icon: <Clock size={16} className="text-gray-500 transform rotate-180" />
+    },
+    {
+      value: 'a-z',
+      label: 'A to Z',
+      icon: <SortAsc size={16} className="text-gray-500" />
+    },
+    {
+      value: 'z-a',
+      label: 'Z to A',
+      icon: <SortAsc size={16} className="text-gray-500 transform rotate-180" />
+    },
+    {
+      value: 'rating',
+      label: 'Highest Rating',
+      icon: <Star size={16} className="text-gray-500" />
+    }
+  ];
 
   // Fetch user's lists
   useEffect(() => {
@@ -194,6 +227,30 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
     navigate(`/tmdb/${type}/${id}`);
   };
 
+  // Add sorting function
+  const getSortedVideos = (videos: Video[]) => {
+    const filteredVideos = videos.filter(video => 
+      video.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return [...filteredVideos].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+        case 'oldest':
+          return new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
+        case 'a-z':
+          return a.title.localeCompare(b.title);
+        case 'z-a':
+          return b.title.localeCompare(a.title);
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        default:
+          return 0;
+      }
+    });
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -255,21 +312,32 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
         </div>
       </div>
 
-      {/* Lists Selection */}
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        {lists.map(list => (
-          <button
-            key={list.id}
-            onClick={() => setSelectedList(list)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
-              ${selectedList?.id === list.id
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-          >
-            {list.name}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="w-48">
+          <Dropdown
+            options={sortOptions}
+            value={sortBy}
+            onChange={(value) => setSortBy(value as SortOption)}
+            icon={<ArrowUpDown size={16} className="text-gray-500" />}
+          />
+        </div>
+
+        {/* Lists Selection */}
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {lists.map(list => (
+            <button
+              key={list.id}
+              onClick={() => setSelectedList(list)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+                ${selectedList?.id === list.id
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+            >
+              {list.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Search */}
@@ -292,9 +360,7 @@ const Lists: React.FC<ListsProps> = ({ apiKey }) => {
           transition={{ duration: 0.3 }}
         >
           <MovieGrid 
-            videos={videos.filter(video => 
-              video.title.toLowerCase().includes(searchQuery.toLowerCase())
-            )}
+            videos={getSortedVideos(videos)}
             isLoading={isLoading}
             lastVideoElementRef={() => {}}
             onVideoClick={(video) => {
