@@ -41,7 +41,7 @@ module.exports = {
         'fourth': 'moveHorizontal 40s ease infinite',
         'fifth': 'moveInCircle 20s ease infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
-        'vanish': 'vanish 0.5s ease-out forwards',
+        'vanish': 'vanish 0.3s ease-out forwards',
       },
       keyframes: {
         'slide-in': {
@@ -95,11 +95,16 @@ module.exports = {
         vanish: {
           '0%': { 
             transform: 'scale(1)',
-            opacity: '1'
+            opacity: '1',
+            gridTemplateRows: 'auto',
           },
           '100%': { 
             transform: 'scale(0.95)',
-            opacity: '0'
+            opacity: '0',
+            gridTemplateRows: '0fr',
+            margin: '0',
+            padding: '0',
+            height: '0',
           },
         },
       },

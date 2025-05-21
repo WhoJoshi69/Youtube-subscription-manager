@@ -101,15 +101,24 @@ const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
         )}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto">
+      {/* Updated Grid */}
+      <div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gridAutoRows: 'auto',
+          gridAutoFlow: 'dense'
+        }}
+      >
         {filteredVideos.map((video) => (
-          <SpecialVideoCard
-            key={video.id}
-            video={video}
-            onToggleSelect={onToggleSelect}
-            onMarkAsWatched={onMarkAsWatched}
-          />
+          <div key={video.id} className="transition-all duration-300">
+            <SpecialVideoCard
+              video={video}
+              onToggleSelect={onToggleSelect}
+              onMarkAsWatched={onMarkAsWatched}
+            />
+          </div>
         ))}
       </div>
 

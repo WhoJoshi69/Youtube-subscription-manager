@@ -33,22 +33,23 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
     setIsVanishing(true);
     setTimeout(() => {
       onMarkAsWatched(video.id);
-    }, 500); // Match this with the animation duration
+    }, 300); // Reduced animation time for better UX
   };
 
   if (isVanishing) {
-    return (
-      <div className="animate-vanish col-span-1 aspect-video" />
-    );
+    return null; // Return null instead of a placeholder to allow grid to adjust
   }
 
   return (
     <div
       className={`relative group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm 
-                  hover:shadow-lg transition-all duration-300 transform
+                  hover:shadow-lg transition-all duration-300
                   ${isVanishing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        animation: isVanishing ? 'vanish 0.3s ease-out forwards' : 'none',
+      }}
     >
       {/* Thumbnail Container */}
       <div className="relative aspect-video">
