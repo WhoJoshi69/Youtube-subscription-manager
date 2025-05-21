@@ -41,6 +41,7 @@ module.exports = {
         'fourth': 'moveHorizontal 40s ease infinite',
         'fifth': 'moveInCircle 20s ease infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'vanish': 'vanish 0.5s ease-out forwards',
       },
       keyframes: {
         'slide-in': {
@@ -90,6 +91,16 @@ module.exports = {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
+        },
+        vanish: {
+          '0%': { 
+            transform: 'scale(1)',
+            opacity: '1'
+          },
+          '100%': { 
+            transform: 'scale(0.95)',
+            opacity: '0'
+          },
         },
       },
       borderRadius: {

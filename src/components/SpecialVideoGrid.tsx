@@ -41,7 +41,7 @@ const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-xl mb-4"></div>
@@ -102,7 +102,7 @@ const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto">
         {filteredVideos.map((video) => (
           <SpecialVideoCard
             key={video.id}

@@ -24,24 +24,53 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
   onMarkAsWatched,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isVanishing, setIsVanishing] = useState(false);
 
-  const handleClick = () => {
-    window.open(video.source_url, '_blank', 'noopener,noreferrer');
+  const handleMarkAsWatched = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsVanishing(true);
+    setTimeout(() => {
+      onMarkAsWatched(video.id);
+    }, 500); // Match this with the animation duration
   };
+
+  if (isVanishing) {
+    return (
+      <div className="animate-vanish col-span-1 aspect-video" />
+    );
+  }
 
   return (
     <div
-      className="relative group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+      className={`relative group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm 
+                  hover:shadow-lg transition-all duration-300 transform
+                  ${isVanishing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Thumbnail Container */}
-      <div className="relative aspect-video cursor-pointer" onClick={handleClick}>
-        <img
-          src={video.thumbnail_url || ''}
-          alt={video.title}
-          className="w-full h-full object-cover"
-        />
+      <div className="relative aspect-video">
+        {/* Make the video link a separate clickable area */}
+        <a 
+          href={video.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full h-full"
+          onClick={(e) => {
+            // Prevent click if we're clicking the watch button
+            if ((e.target as HTMLElement).closest('button')) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <img
+            src={video.thumbnail_url || ''}
+            alt={video.title}
+            className="w-full h-full object-cover"
+          />
+        </a>
         
         {/* Watched Badge */}
         {video.watched && (
@@ -51,15 +80,12 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
           </div>
         )}
 
-        {/* Watch Button */}
+        {/* Watch Button - Now a separate clickable area */}
         {!video.watched && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMarkAsWatched(video.id);
-            }}
+            onClick={handleMarkAsWatched}
             className={`absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white 
-                       transition-all duration-200 transform hover:scale-110
+                       transition-all duration-200 transform hover:scale-110 z-10
                        ${isHovered ? 'opacity-100' : 'opacity-0'}`}
           >
             <Eye size={16} />
@@ -67,7 +93,8 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
         )}
 
         {/* Hover Overlay */}
-        <div className={`absolute inset-0 bg-black/30 transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute inset-0 bg-black/30 transition-opacity duration-200 pointer-events-none
+                        ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
       {/* Content */}
