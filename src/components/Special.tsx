@@ -135,6 +135,29 @@ const Special: React.FC = () => {
     }
   };
 
+  const handleDelete = async (videoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('pvideos')
+        .delete()
+        .eq('id', videoId);
+
+      if (error) {
+        console.error('Error deleting video:', error);
+        return;
+      }
+
+      // Update both videos and allVideos states
+      const updateVideos = (prevVideos: SpecialVideo[]) =>
+        prevVideos.filter(video => video.id !== videoId);
+
+      setVideos(updateVideos);
+      setAllVideos(updateVideos);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <PasswordProtection
@@ -156,6 +179,7 @@ const Special: React.FC = () => {
         onToggleSelect={handleToggleSelect}
         onSelectAll={handleSelectAll}
         onMarkAsWatched={handleMarkAsWatched}
+        onDelete={handleDelete}
       />
     </div>
   );

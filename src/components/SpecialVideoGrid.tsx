@@ -18,6 +18,7 @@ interface SpecialVideoGridProps {
   onToggleSelect: (videoId: string) => void;
   onSelectAll: (videoIds: string[]) => void;
   onMarkAsWatched: (videoId: string) => void;
+  onDelete: (videoId: string) => void;
 }
 
 const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
@@ -26,6 +27,7 @@ const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
   onToggleSelect,
   onSelectAll,
   onMarkAsWatched,
+  onDelete,
 }) => {
   const [showWatched, setShowWatched] = useState(true);
   const [isAllSelected, setIsAllSelected] = useState(false);
@@ -117,6 +119,7 @@ const SpecialVideoGrid: React.FC<SpecialVideoGridProps> = ({
               video={video}
               onToggleSelect={onToggleSelect}
               onMarkAsWatched={onMarkAsWatched}
+              onDelete={onDelete}
             />
           </div>
         ))}

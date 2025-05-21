@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, CheckCircle } from 'lucide-react';
+import { Eye, CheckCircle, Trash2 } from 'lucide-react';
 import { formatPublishedDate } from '../utils/dateUtils';
 
 interface SpecialVideo {
@@ -16,15 +16,18 @@ interface SpecialVideoCardProps {
   video: SpecialVideo;
   onToggleSelect: (videoId: string) => void;
   onMarkAsWatched: (videoId: string) => void;
+  onDelete: (videoId: string) => void;
 }
 
 const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
   video,
   onToggleSelect,
   onMarkAsWatched,
+  onDelete,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isVanishing, setIsVanishing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleMarkAsWatched = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,11 +36,27 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
     setIsVanishing(true);
     setTimeout(() => {
       onMarkAsWatched(video.id);
-    }, 300); // Reduced animation time for better UX
+    }, 300);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsVanishing(true);
+    setTimeout(() => {
+      onDelete(video.id);
+    }, 300);
   };
 
   if (isVanishing) {
-    return null; // Return null instead of a placeholder to allow grid to adjust
+    return null;
   }
 
   return (
@@ -46,21 +65,19 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
                   hover:shadow-lg transition-all duration-300
                   ${isVanishing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        animation: isVanishing ? 'vanish 0.3s ease-out forwards' : 'none',
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setShowDeleteConfirm(false);
       }}
     >
       {/* Thumbnail Container */}
       <div className="relative aspect-video">
-        {/* Make the video link a separate clickable area */}
         <a 
           href={video.source_url}
           target="_blank"
           rel="noopener noreferrer"
           className="block w-full h-full"
           onClick={(e) => {
-            // Prevent click if we're clicking the watch button
             if ((e.target as HTMLElement).closest('button')) {
               e.preventDefault();
             }
@@ -81,17 +98,54 @@ const SpecialVideoCard: React.FC<SpecialVideoCardProps> = ({
           </div>
         )}
 
-        {/* Watch Button - Now a separate clickable area */}
-        {!video.watched && (
-          <button
-            onClick={handleMarkAsWatched}
-            className={`absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white 
-                       transition-all duration-200 transform hover:scale-110 z-10
-                       ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <Eye size={16} />
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className={`absolute top-2 right-2 flex gap-2 transition-opacity duration-200 z-10
+                        ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Watch Button */}
+          {!video.watched && (
+            <button
+              onClick={handleMarkAsWatched}
+              className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white 
+                       transition-all duration-200 transform hover:scale-110"
+              title="Mark as watched"
+            >
+              <Eye size={16} />
+            </button>
+          )}
+          
+          {/* Delete Button */}
+          {!showDeleteConfirm ? (
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-full bg-red-600/50 hover:bg-red-600/70 text-white 
+                       transition-all duration-200 transform hover:scale-110"
+              title="Delete video"
+            >
+              <Trash2 size={16} />
+            </button>
+          ) : (
+            <div className="flex gap-1">
+              <button
+                onClick={confirmDelete}
+                className="px-2 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs
+                         transition-all duration-200"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(false);
+                }}
+                className="px-2 py-1 rounded-full bg-gray-600 hover:bg-gray-700 text-white text-xs
+                         transition-all duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Hover Overlay */}
         <div className={`absolute inset-0 bg-black/30 transition-opacity duration-200 pointer-events-none
