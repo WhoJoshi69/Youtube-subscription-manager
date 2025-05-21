@@ -21,8 +21,9 @@ import PersonDetails from './components/PersonDetails';
 import Home from './components/Home';
 import Lists from './components/Lists';
 import Collection from './components/Collection';
+import Special from './components/Special';
 
-type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home' | 'lists';
+type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home' | 'lists' | 'special';
 
 function App() {
   // Remove global usePlaylist call
@@ -36,7 +37,7 @@ function App() {
   // Initialize activeSection from URL or default to 'home'
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const path = window.location.pathname.substring(1);
-    return (path === 'home' || path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'lists') 
+    return (path === 'home' || path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'lists' || path === 'special') 
       ? path as Section 
       : 'home';
   });
@@ -59,6 +60,14 @@ function App() {
         window.dispatchEvent(event);
       }, 100);
     }
+
+    switch (section) {
+      case 'special':
+        navigate('/special');
+        break;
+      default:
+        break;
+    }
   };
 
   // Handle browser back/forward buttons
@@ -69,7 +78,7 @@ function App() {
         // Don't change active section for detail pages
         return;
       }
-      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'home' || path === 'lists') {
+      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'home' || path === 'lists' || path === 'special') {
         setActiveSection(path as Section);
       } else {
         setActiveSection('home');
@@ -326,6 +335,31 @@ function App() {
         <Route
           path="/collection/:id"
           element={<Collection apiKey={tmdbApiKey} darkMode={darkMode} onThemeToggle={toggleTheme} />}
+        />
+        <Route
+          path="/special"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <Special />
+                </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
+              <Navigation 
+                activeSection="special"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
         />
       </Routes>
     </GradientLayout>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SearchInput } from './ui/SearchInput';
 
 interface VideoSearchProps {
@@ -6,6 +6,8 @@ interface VideoSearchProps {
 }
 
 export const VideoSearch: React.FC<VideoSearchProps> = ({ onSearch }) => {
+  const [searchValue, setSearchValue] = useState('');
+  
   const placeholders = [
     "Search in videos...",
     "Filter by title...",
@@ -19,10 +21,18 @@ export const VideoSearch: React.FC<VideoSearchProps> = ({ onSearch }) => {
     onSearch(value);
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    onSearch(value); // Trigger search on every change
+  };
+
   return (
     <div className="mb-6">
       <SearchInput
         placeholders={placeholders}
+        value={searchValue}
+        onChange={handleChange}
         onSubmit={handleSubmit}
         className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
       />

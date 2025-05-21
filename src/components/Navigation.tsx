@@ -5,10 +5,11 @@ import {
   Users,
   Film,
   User,
-  List
+  List,
+  Star
 } from "lucide-react";
 
-type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists';
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists' | 'special';
 
 interface NavigationProps {
   activeSection: Section;
@@ -52,6 +53,12 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       icon: <List className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('lists'),
       isActive: activeSection === 'lists'
+    },
+    {
+      title: "Special",
+      icon: <Star className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      onClick: () => onSectionChange('special'),
+      isActive: activeSection === 'special'
     },
   ];
 
