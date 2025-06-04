@@ -4,6 +4,7 @@ import {
   PlaySquare,
   Users,
   Film,
+  Clapperboard,
   User,
   List
 } from "lucide-react";
@@ -43,7 +44,7 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
     },
     {
       title: "Trailers",
-      icon: <Film className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      icon: <Clapperboard className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('trailers'),
       isActive: activeSection === 'trailers'
     },

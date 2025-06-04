@@ -61,13 +61,25 @@ const Trailers: React.FC = () => {
         {trailers.map(trailer => (
           <div
             key={trailer.id}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col relative group"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col relative group cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-2xl"
+            onClick={e => {
+              // Only trigger if not clicking the eye button
+              if ((e.target as HTMLElement).closest('button')) return;
+              window.open(trailer.youtube_link, '_blank', 'noopener,noreferrer');
+            }}
+            tabIndex={0}
+            role="button"
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                window.open(trailer.youtube_link, '_blank', 'noopener,noreferrer');
+              }
+            }}
           >
             {trailer.poster_url ? (
               <img
                 src={trailer.poster_url}
                 alt={trailer.name}
-                className="rounded-lg w-full h-48 object-cover mb-3"
+                className="rounded-lg w-full h-48 object-cover mb-3 transition-transform duration-200 group-hover:scale-105"
                 loading="lazy"
               />
             ) : (
@@ -77,14 +89,6 @@ const Trailers: React.FC = () => {
             )}
             <div className="flex-1">
               <h3 className="text-lg font-medium mb-2 truncate" title={trailer.name}>{trailer.name}</h3>
-              <a
-                href={trailer.youtube_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline text-sm"
-              >
-                Watch on YouTube
-              </a>
             </div>
             <div className="mt-4 flex items-center justify-between">
               <a
@@ -92,6 +96,7 @@ const Trailers: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-gray-500 hover:underline"
+                onClick={e => e.stopPropagation()}
               >
                 Source
               </a>
@@ -99,7 +104,10 @@ const Trailers: React.FC = () => {
                 className={`ml-2 p-2 rounded-full transition-colors ${trailer.is_watched ? 'bg-green-100 dark:bg-green-900 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-red-100 hover:text-red-600'}`}
                 title={trailer.is_watched ? 'Watched' : 'Mark as watched'}
                 disabled={trailer.is_watched || markingId === trailer.id}
-                onClick={() => markAsWatched(trailer.id)}
+                onClick={e => {
+                  e.stopPropagation();
+                  markAsWatched(trailer.id);
+                }}
               >
                 {trailer.is_watched ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
