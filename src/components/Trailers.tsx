@@ -4,11 +4,41 @@ import { Trailer } from '../types';
 import { Eye, EyeOff } from 'lucide-react';
 import Loader from './Loader';
 
+interface YoutubeTitleMap {
+  [videoId: string]: string;
+}
+
 const Trailers: React.FC = () => {
   const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [vanishing, setVanishing] = useState<{ [id: string]: boolean }>({});
+  const [ytTitles, setYtTitles] = useState<YoutubeTitleMap>({});
+
+  // Fetch YouTube video titles for all trailers
+  useEffect(() => {
+    const fetchTitles = async () => {
+      const newTitles: YoutubeTitleMap = {};
+      for (const trailer of trailers) {
+        const match = trailer.youtube_link.match(/(?:youtu.be\/|v=|\/embed\/|\/shorts\/|\/watch\?v=|&v=)([\w-]{11})/);
+        const videoId = match ? match[1] : null;
+        if (!videoId) continue;
+        try {
+          // Try to fetch title from YouTube oEmbed (no API key needed)
+          const resp = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+          if (resp.ok) {
+            const data = await resp.json();
+            newTitles[videoId] = data.title;
+          }
+        } catch {
+          // Ignore errors, fallback to DB title
+        }
+      }
+      setYtTitles(newTitles);
+    };
+    if (trailers.length > 0) fetchTitles();
+  }, [trailers]);
 
   const fetchTrailers = async () => {
     setIsLoading(true);
@@ -33,19 +63,26 @@ const Trailers: React.FC = () => {
 
   const markAsWatched = async (id: string) => {
     setMarkingId(id);
-    try {
-      const { error } = await supabase
-        .from('trailers')
-        .update({ is_watched: true })
-        .eq('id', id);
-      if (error) throw error;
-      // Remove the trailer from the grid instantly
-      setTrailers(prev => prev.filter(t => t.id !== id));
-    } catch (err) {
-      setError('Failed to mark as watched');
-    } finally {
-      setMarkingId(null);
-    }
+    setVanishing(prev => ({ ...prev, [id]: true }));
+    setTimeout(async () => {
+      try {
+        const { error } = await supabase
+          .from('trailers')
+          .update({ is_watched: true })
+          .eq('id', id);
+        if (error) throw error;
+        setTrailers(prev => prev.filter(t => t.id !== id));
+      } catch (err) {
+        setError('Failed to mark as watched');
+      } finally {
+        setMarkingId(null);
+        setVanishing(prev => {
+          const copy = { ...prev };
+          delete copy[id];
+          return copy;
+        });
+      }
+    }, 250); // Animation duration
   };
 
   if (isLoading) return <Loader />;
@@ -67,7 +104,14 @@ const Trailers: React.FC = () => {
           return (
             <div
               key={trailer.id}
-              className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm transition-all duration-200 transform cursor-pointer"
+              className={`group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm transition-all duration-200 transform cursor-pointer
+                ${vanishing[trailer.id] ? 'scale-95 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
+              style={{
+                gridColumn: vanishing[trailer.id] ? 'span 1' : 'auto',
+                minHeight: vanishing[trailer.id] ? '0' : 'auto',
+                margin: vanishing[trailer.id] ? '0' : undefined,
+                padding: vanishing[trailer.id] ? '0' : undefined,
+              }}
               tabIndex={0}
               role="button"
               onClick={e => {
@@ -123,7 +167,7 @@ const Trailers: React.FC = () => {
               </div>
               {/* Trailer info */}
               <div className="p-4">
-                <h3 className="text-sm font-medium line-clamp-2 mb-1 text-gray-900 dark:text-white">{trailer.name}</h3>
+                <h3 className="text-sm font-medium line-clamp-2 mb-1 text-gray-900 dark:text-white">{(videoId && ytTitles[videoId]) ? ytTitles[videoId] : trailer.name}</h3>
                 <div className="flex items-center justify-between mt-2">
                   <a
                     href={trailer.source_url}
