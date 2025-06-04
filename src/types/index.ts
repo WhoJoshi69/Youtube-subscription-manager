@@ -47,3 +47,14 @@ export interface SubscriptionState {
   channels: Channel[];
   lastUpdated?: string;
 }
+
+// Trailer type for trailers section
+export interface Trailer {
+  id: string;
+  name: string;
+  youtube_link: string;
+  poster_url?: string;
+  source_url: string;
+  is_watched: boolean;
+  created_at: string;
+}

@@ -8,7 +8,7 @@ import {
   List
 } from "lucide-react";
 
-type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists';
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists' | 'trailers';
 
 interface NavigationProps {
   activeSection: Section;
@@ -40,6 +40,12 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       icon: <Film className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('trending'),
       isActive: activeSection === 'trending'
+    },
+    {
+      title: "Trailers",
+      icon: <Film className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      onClick: () => onSectionChange('trailers'),
+      isActive: activeSection === 'trailers'
     },
     {
       title: "People",
