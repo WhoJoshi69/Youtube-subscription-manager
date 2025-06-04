@@ -47,10 +47,11 @@ const Trailers: React.FC = () => {
       const { data, error } = await supabase
         .from('trailers')
         .select('*')
+        .eq('is_watched', false)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setTrailers(data as Trailer[]);
-    } catch (err: any) {
+      setTrailers(data || []);
+    } catch (err) {
       setError('Failed to fetch trailers');
     } finally {
       setIsLoading(false);
