@@ -39,7 +39,8 @@ const Trailers: React.FC = () => {
         .update({ is_watched: true })
         .eq('id', id);
       if (error) throw error;
-      setTrailers(prev => prev.map(t => t.id === id ? { ...t, is_watched: true } : t));
+      // Remove the trailer from the grid instantly
+      setTrailers(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       setError('Failed to mark as watched');
     } finally {
@@ -57,7 +58,7 @@ const Trailers: React.FC = () => {
           Trailers <span className="text-gray-400">({trailers.length})</span>
         </h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {trailers.map(trailer => (
           <div
             key={trailer.id}
@@ -75,18 +76,25 @@ const Trailers: React.FC = () => {
               }
             }}
           >
-            {trailer.poster_url ? (
-              <img
-                src={trailer.poster_url}
-                alt={trailer.name}
-                className="rounded-lg w-full h-48 object-cover mb-3 transition-transform duration-200 group-hover:scale-105"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mb-3 text-gray-400">
-                No Image
-              </div>
-            )}
+            {/* Use YouTube thumbnail as image */}
+            {(() => {
+              // Extract YouTube video ID from the link
+              const match = trailer.youtube_link.match(/(?:youtu.be\/|v=|\/embed\/|\/shorts\/|\/watch\?v=|&v=)([\w-]{11})/);
+              const videoId = match ? match[1] : null;
+              const ytThumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+              return ytThumb ? (
+                <img
+                  src={ytThumb}
+                  alt={trailer.name}
+                  className="rounded-lg w-full aspect-[16/9] object-cover mb-3 transition-transform duration-200 group-hover:scale-105 bg-black"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full aspect-[16/9] bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mb-3 text-gray-400">
+                  No Image
+                </div>
+              );
+            })()}
             <div className="flex-1">
               <h3 className="text-lg font-medium mb-2 truncate" title={trailer.name}>{trailer.name}</h3>
             </div>
