@@ -58,70 +58,87 @@ const Trailers: React.FC = () => {
           Trailers <span className="text-gray-400">({trailers.length})</span>
         </h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {trailers.map(trailer => (
-          <div
-            key={trailer.id}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col relative group cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-2xl"
-            onClick={e => {
-              // Only trigger if not clicking the eye button
-              if ((e.target as HTMLElement).closest('button')) return;
-              window.open(trailer.youtube_link, '_blank', 'noopener,noreferrer');
-            }}
-            tabIndex={0}
-            role="button"
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                window.open(trailer.youtube_link, '_blank', 'noopener,noreferrer');
-              }
-            }}
-          >
-            {/* Use YouTube thumbnail as image */}
-            {(() => {
-              // Extract YouTube video ID from the link
-              const match = trailer.youtube_link.match(/(?:youtu.be\/|v=|\/embed\/|\/shorts\/|\/watch\?v=|&v=)([\w-]{11})/);
-              const videoId = match ? match[1] : null;
-              const ytThumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
-              return ytThumb ? (
-                <img
-                  src={ytThumb}
-                  alt={trailer.name}
-                  className="rounded-lg w-full aspect-[16/9] object-cover mb-3 transition-transform duration-200 group-hover:scale-105 bg-black"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full aspect-[16/9] bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center mb-3 text-gray-400">
-                  No Image
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+        {trailers.map(trailer => {
+          // Extract YouTube video ID and thumbnail
+          const match = trailer.youtube_link.match(/(?:youtu.be\/|v=|\/embed\/|\/shorts\/|\/watch\?v=|&v=)([\w-]{11})/);
+          const videoId = match ? match[1] : null;
+          const ytThumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+          return (
+            <div
+              key={trailer.id}
+              className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm transition-all duration-200 transform cursor-pointer"
+              tabIndex={0}
+              role="button"
+              onClick={e => {
+                if ((e.target as HTMLElement).closest('button')) return;
+                if (videoId) window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank', 'noopener,noreferrer');
+              }}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ' ') && videoId) {
+                  window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank', 'noopener,noreferrer');
+                }
+              }}
+            >
+              {/* Thumbnail container */}
+              <div className="relative aspect-video bg-gray-200 dark:bg-gray-700">
+                {ytThumb ? (
+                  <img
+                    src={ytThumb}
+                    alt={trailer.name}
+                    className="w-full h-full object-cover transition-opacity duration-300"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    No Image
+                  </div>
+                )}
+                {/* Play button in center */}
+                <button
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-red-600 text-white transition-all duration-200 backdrop-blur-sm opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 z-10"
+                  title="Play trailer"
+                  tabIndex={-1}
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (videoId) window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                </button>
+                {/* Watched button overlay */}
+                <button
+                  className="absolute bottom-2 right-2 p-2 rounded-full text-white transition-all duration-200 backdrop-blur-sm hover:scale-110 z-10 bg-black/50 hover:bg-black/70 opacity-0 group-hover:opacity-100"
+                  title="Mark as watched"
+                  disabled={markingId === trailer.id}
+                  onClick={e => {
+                    e.stopPropagation();
+                    markAsWatched(trailer.id);
+                  }}
+                >
+                  <Eye size={20} />
+                </button>
+                {/* Dark overlay on hover */}
+                <div className="absolute inset-0 bg-black/20 transition-opacity duration-200 group-hover:opacity-100 opacity-0" />
+              </div>
+              {/* Trailer info */}
+              <div className="p-4">
+                <h3 className="text-sm font-medium line-clamp-2 mb-1 text-gray-900 dark:text-white">{trailer.name}</h3>
+                <div className="flex items-center justify-between mt-2">
+                  <a
+                    href={trailer.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-gray-500 hover:underline"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Source
+                  </a>
                 </div>
-              );
-            })()}
-            <div className="flex-1">
-              <h3 className="text-lg font-medium mb-2 truncate" title={trailer.name}>{trailer.name}</h3>
+              </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-              <a
-                href={trailer.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-gray-500 hover:underline"
-                onClick={e => e.stopPropagation()}
-              >
-                Source
-              </a>
-              <button
-                className={`ml-2 p-2 rounded-full transition-colors ${trailer.is_watched ? 'bg-green-100 dark:bg-green-900 text-green-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-red-100 hover:text-red-600'}`}
-                title={trailer.is_watched ? 'Watched' : 'Mark as watched'}
-                disabled={trailer.is_watched || markingId === trailer.id}
-                onClick={e => {
-                  e.stopPropagation();
-                  markAsWatched(trailer.id);
-                }}
-              >
-                {trailer.is_watched ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {trailers.length === 0 && (
         <div className="text-center text-gray-500 py-8">No trailers found.</div>
