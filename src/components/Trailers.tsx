@@ -67,14 +67,33 @@ const Trailers: React.FC = () => {
     setVanishing(prev => ({ ...prev, [id]: true }));
     setTimeout(async () => {
       try {
-        const { error } = await supabase
+        console.log('Attempting to mark trailer as watched:', id);
+        
+        // Check current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Current session:', session?.user?.id, sessionError);
+        
+        const { data, error } = await supabase
           .from('trailers')
           .update({ is_watched: true })
-          .eq('id', id);
+          .eq('id', id)
+          .select(); // Add select to see what was updated
+          
+        console.log('Update result:', { data, error });
+        
         if (error) throw error;
-        setTrailers(prev => prev.filter(t => t.id !== id));
+        
+        // Only remove from UI if update was successful
+        if (data && data.length > 0) {
+          setTrailers(prev => prev.filter(t => t.id !== id));
+          console.log('Successfully marked trailer as watched and removed from UI');
+        } else {
+          console.warn('Update succeeded but no rows were affected');
+          setError('No trailer was updated - it may not exist or you may not have permission');
+        }
       } catch (err) {
-        setError('Failed to mark as watched');
+        console.error('Error marking trailer as watched:', err);
+        setError(`Failed to mark as watched: ${err.message || err}`);
       } finally {
         setMarkingId(null);
         setVanishing(prev => {
@@ -95,6 +114,22 @@ const Trailers: React.FC = () => {
         <h2 className="text-xl font-semibold flex items-center gap-2">
           Trailers <span className="text-gray-400">({trailers.length})</span>
         </h2>
+        <button
+          onClick={async () => {
+            console.log('Testing database connection...');
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log('Session:', session?.user?.id);
+            
+            const { data, error } = await supabase
+              .from('trailers')
+              .select('id, is_watched')
+              .limit(1);
+            console.log('Test query result:', { data, error });
+          }}
+          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Test DB
+        </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
         {trailers.map(trailer => {
