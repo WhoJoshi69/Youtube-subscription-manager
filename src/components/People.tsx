@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchInput } from './ui/SearchInput';
 import { useNavigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { saveState, loadState, STORAGE_KEYS } from '../utils/stateStorage';
+import { useFavorites } from '../hooks/useFavorites';
 
 interface Person {
   id: number;
@@ -33,7 +35,9 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [selectedPerson, setSelectedPerson] = useState<any>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [hoveredPersonId, setHoveredPersonId] = useState<number | null>(null);
 
+  const { toggleFavorite, isFavorite } = useFavorites();
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPersonElementRef = useCallback((node: HTMLDivElement) => {
     if (isLoading) return;
@@ -47,6 +51,16 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
   }, [isLoading, hasMore]);
 
   const navigate = useNavigate();
+
+  const handleToggleFavorite = async (e: React.MouseEvent, person: Person) => {
+    e.stopPropagation(); // Prevent navigation when clicking favorite button
+    try {
+      const actorImage = person.profile_path ? `https://image.tmdb.org/t/p/w185${person.profile_path}` : undefined;
+      await toggleFavorite(person.id, person.name, actorImage);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
 
   useEffect(() => {
     if (!searchQuery) {
@@ -111,10 +125,25 @@ const People: React.FC<PeopleProps> = ({ apiKey }) => {
           <div
             key={person.id}
             ref={idx === people.length - 1 ? lastPersonElementRef : undefined}
-            className="group flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            className="relative group flex flex-col bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => navigate(`/person/${person.id}`)}
+            onMouseEnter={() => setHoveredPersonId(person.id)}
+            onMouseLeave={() => setHoveredPersonId(null)}
           >
             <div className="aspect-[2/3] relative">
+              {/* Favorite Star Button */}
+              <button
+                onClick={(e) => handleToggleFavorite(e, person)}
+                className={`absolute top-2 right-2 z-10 p-1 rounded-full transition-all ${
+                  isFavorite(person.id) 
+                    ? 'bg-yellow-500 text-white' 
+                    : 'bg-black/50 text-gray-300 hover:bg-black/70'
+                } ${hoveredPersonId === person.id ? 'opacity-100' : 'opacity-0'}`}
+                title={isFavorite(person.id) ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Star className={`w-4 h-4 ${isFavorite(person.id) ? 'fill-current' : ''}`} />
+              </button>
+              
               <img
                 src={
                   person.profile_path

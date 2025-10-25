@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Star, Eye, Calendar, TrendingUp } from 'lucide-react'
+import { Star, Eye, Calendar, TrendingUp, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { favoritesApi } from '../api/favorites'
 import { FavoriteActor, NewMovieForFavorite } from '../types'
 
@@ -8,6 +9,8 @@ export default function Tracker() {
   const [newMovies, setNewMovies] = useState<NewMovieForFavorite[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hoveredActorId, setHoveredActorId] = useState<number | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadData()
@@ -52,10 +55,49 @@ export default function Tracker() {
     }
   }
 
+  const handleMovieClick = (movieId: number) => {
+    navigate(`/tmdb/movie/${movieId}`, {
+      state: {
+        from: 'tracker'
+      }
+    })
+  }
+
+  const handleActorClick = (actorId: number) => {
+    navigate(`/person/${actorId}`)
+  }
+
+  const LoadingSkeleton = () => (
+    <div className="animate-pulse">
+      <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mt-2 w-3/4"></div>
+    </div>
+  )
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="w-full space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Movie Tracker</h2>
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-semibold mb-3">Favorite Actors</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
+            {[...Array(10)].map((_, i) => (
+              <LoadingSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-3">Recent Movies</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {[...Array(12)].map((_, i) => (
+              <LoadingSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -66,7 +108,7 @@ export default function Tracker() {
         <p className="text-red-600 mb-4">{error}</p>
         <button 
           onClick={loadData}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
         >
           Retry
         </button>
@@ -77,11 +119,11 @@ export default function Tracker() {
   const newMoviesCount = newMovies.filter(movie => movie.is_new).length
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <TrendingUp className="w-6 h-6 text-red-600" />
           <h2 className="text-2xl font-bold">Movie Tracker</h2>
           {newMoviesCount > 0 && (
             <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
@@ -91,133 +133,160 @@ export default function Tracker() {
         </div>
         <button 
           onClick={loadData}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Refresh
         </button>
       </div>
 
-      {/* Favorite Actors */}
+      {/* Favorite Actors - Match Details page cast styling */}
       <div>
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Star className="w-5 h-5 text-yellow-500" />
           Favorite Actors ({favoriteActors.length})
         </h3>
         
         {favoriteActors.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
             No favorite actors yet. Add some from movie details to track their new releases!
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-10 gap-4">
             {favoriteActors.map((actor) => (
-              <div key={actor.id} className="relative group">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  {actor.actor_image ? (
-                    <img 
-                      src={actor.actor_image} 
-                      alt={actor.actor_name}
-                      className="w-full h-32 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
-                      <Star className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                  <div className="p-2">
-                    <p className="text-sm font-medium truncate">{actor.actor_name}</p>
-                  </div>
-                </div>
+              <div
+                key={actor.id}
+                className="relative flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer group"
+                onClick={() => handleActorClick(actor.actor_id)}
+                onMouseEnter={() => setHoveredActorId(actor.actor_id)}
+                onMouseLeave={() => setHoveredActorId(null)}
+              >
                 <button
-                  onClick={() => handleRemoveFavorite(actor.actor_id)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemoveFavorite(actor.actor_id)
+                  }}
+                  className={`absolute top-1 right-1 z-10 p-1 rounded-full transition-all bg-red-500 text-white hover:bg-red-600 ${
+                    hoveredActorId === actor.actor_id ? 'opacity-100' : 'opacity-0'
+                  }`}
                   title="Remove from favorites"
                 >
-                  ×
+                  <X className="w-3 h-3" />
                 </button>
+                
+                <img
+                  src={
+                    actor.actor_image
+                      ? actor.actor_image
+                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(actor.actor_name)}&background=444&color=fff&size=128`
+                  }
+                  alt={actor.actor_name}
+                  className="rounded-3xl mb-1 w-24 h-32 object-cover bg-gray-700 transition-transform duration-200 group-hover:scale-110"
+                  onError={e => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(actor.actor_name)}&background=444&color=fff&size=128`
+                  }}
+                />
+                <div className="text-xs text-center text-gray-100 font-semibold">{actor.actor_name}</div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* New Movies */}
+      {/* Recent Movies - Match MovieGrid styling */}
       <div>
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-green-500" />
           Recent Movies ({newMovies.length})
         </h3>
         
         {newMovies.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
             No recent movies from your favorite actors.
           </p>
         ) : (
-          <div className="space-y-4">
-            {newMovies.map((movie) => (
-              <div 
-                key={`${movie.movie_id}-${movie.actor_id}`}
-                className={`bg-white rounded-lg shadow-md p-4 ${movie.is_new ? 'border-l-4 border-blue-500' : ''}`}
-              >
-                <div className="flex gap-4">
-                  {movie.movie_poster ? (
-                    <img 
-                      src={movie.movie_poster} 
-                      alt={movie.movie_title}
-                      className="w-20 h-30 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-20 h-30 bg-gray-200 rounded flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-gray-400" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {newMovies.map((movie) => {
+              const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : null
+              
+              return (
+                <div
+                  key={`${movie.movie_id}-${movie.actor_id}`}
+                  className="relative group cursor-pointer"
+                  onClick={() => handleMovieClick(movie.movie_id)}
+                >
+                  {/* New badge */}
+                  {movie.is_new && (
+                    <div className="absolute top-2 left-2 z-10 bg-red-500/90 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      New
                     </div>
                   )}
-                  
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-semibold text-lg">{movie.movie_title}</h4>
-                        <p className="text-sm text-gray-600 mb-1">
+
+                  {/* Mark as seen button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleMarkAsSeen(movie.movie_id, movie.actor_id)
+                    }}
+                    className={`absolute top-2 right-2 p-2 rounded-full text-white 
+                               transition-all duration-200 backdrop-blur-sm hover:scale-110 
+                               transform z-10 ${
+                                 movie.is_new 
+                                   ? 'bg-black/50 hover:bg-black/70' 
+                                   : 'bg-green-500/80'
+                               }`}
+                    title={movie.is_new ? "Mark as seen" : "Already seen"}
+                  >
+                    <Eye size={16} />
+                  </button>
+
+                  <div className="aspect-[2/3] relative">
+                    <img
+                      src={
+                        movie.movie_poster
+                          ? movie.movie_poster
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(movie.movie_title)}&background=444&color=fff&size=256`
+                      }
+                      alt={movie.movie_title}
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                      loading="lazy"
+                      onError={e => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(movie.movie_title)}&background=444&color=fff&size=256`
+                      }}
+                    />
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                      <div className="text-white text-center p-4">
+                        <p className="text-sm line-clamp-4">{movie.overview}</p>
+                        <div className="mt-2 flex items-center justify-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          <span className="text-sm font-medium">{movie.vote_average?.toFixed(1)}</span>
+                        </div>
+                        <p className="text-xs mt-1 text-gray-300">
                           Starring: {movie.actor_name}
                         </p>
-                        {movie.release_date && (
-                          <p className="text-sm text-gray-500 mb-2">
-                            Released: {new Date(movie.release_date).toLocaleDateString()}
-                          </p>
-                        )}
-                        {movie.vote_average && (
-                          <div className="flex items-center gap-1 mb-2">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="text-sm">{movie.vote_average}/10</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {movie.is_new && (
-                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                            New
-                          </span>
-                        )}
-                        <button
-                          onClick={() => handleMarkAsSeen(movie.movie_id, movie.actor_id)}
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
-                          title="Mark as seen"
-                        >
-                          <Eye className="w-4 h-4" />
-                          {movie.is_new ? 'Mark Seen' : 'Seen'}
-                        </button>
                       </div>
                     </div>
-                    
-                    {movie.overview && (
-                      <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                        {movie.overview}
+                  </div>
+                  
+                  <div className="p-2">
+                    <h3 className="text-sm font-medium line-clamp-2" title={movie.movie_title}>
+                      {movie.movie_title}
+                    </h3>
+                    {releaseYear && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {releaseYear}
                       </p>
                     )}
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                      {movie.actor_name}
+                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
