@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from './Header';
-import { Moon, Sun, ArrowLeft, Check, Clock, Eye, Play } from 'lucide-react';
+import { Moon, Sun, ArrowLeft, Check, Clock, Eye, Play, Star } from 'lucide-react';
 import { GradientLayout } from './Layout/GradientLayout';
 import { BackgroundGradient } from './ui/BackgroundGradient';
 import { useWatchedTitles } from '../hooks/useWatchedTitles';
+import { useFavorites } from '../hooks/useFavorites';
 
 interface DetailsProps {
   apiKey: string;
@@ -28,6 +29,7 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
   const navigate = useNavigate();
   const location = useLocation();
   const { isWatched, markAsWatched } = useWatchedTitles();
+  const { favoriteActors, toggleFavorite, isFavorite } = useFavorites();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -143,6 +145,15 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
 
   const handlePersonClick = (personId: number) => {
     navigate(`/person/${personId}`);
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent, actorId: number, actorName: string, actorImage?: string) => {
+    e.stopPropagation(); // Prevent navigation when clicking favorite button
+    try {
+      await toggleFavorite(actorId, actorName, actorImage);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -311,10 +322,21 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                     {cast.map((member: any) => (
                       <div
                         key={member.id}
-                        className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                        className="relative flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer group"
                         onClick={() => navigate(`/person/${member.id}`)}
                         style={{ cursor: 'pointer' }}
                       >
+                        <button
+                          onClick={(e) => handleToggleFavorite(e, member.id, member.name, member.profile_path ? `https://image.tmdb.org/t/p/w185${member.profile_path}` : undefined)}
+                          className={`absolute top-1 right-1 z-10 p-1 rounded-full transition-all ${
+                            isFavorite(member.id) 
+                              ? 'bg-yellow-500 text-white' 
+                              : 'bg-black/50 text-gray-300 hover:bg-black/70'
+                          }`}
+                          title={isFavorite(member.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          <Star className={`w-3 h-3 ${isFavorite(member.id) ? 'fill-current' : ''}`} />
+                        </button>
                         <img
                           src={
                             member.profile_path
@@ -449,10 +471,21 @@ const Details: React.FC<DetailsProps> = ({ apiKey, darkMode, onThemeToggle }) =>
                   {cast.map((member: any) => (
                     <div
                       key={member.id}
-                      className="flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer"
+                      className="relative flex flex-col items-center transition-transform duration-200 hover:scale-105 hover:bg-gray-800/60 hover:shadow-lg rounded-lg p-2 cursor-pointer group"
                       onClick={() => navigate(`/person/${member.id}`)}
                       style={{ cursor: 'pointer' }}
                     >
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, member.id, member.name, member.profile_path ? `https://image.tmdb.org/t/p/w185${member.profile_path}` : undefined)}
+                        className={`absolute top-1 right-1 z-10 p-1 rounded-full transition-all ${
+                          isFavorite(member.id) 
+                            ? 'bg-yellow-500 text-white' 
+                            : 'bg-black/50 text-gray-300 hover:bg-black/70'
+                        }`}
+                        title={isFavorite(member.id) ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        <Star className={`w-3 h-3 ${isFavorite(member.id) ? 'fill-current' : ''}`} />
+                      </button>
                       <img
                         src={
                           member.profile_path

@@ -22,8 +22,9 @@ import Home from './components/Home';
 import Lists from './components/Lists';
 import Collection from './components/Collection';
 import Trailers from './components/Trailers';
+import Tracker from './components/Tracker';
 
-type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home' | 'lists' | 'trailers';
+type Section = 'playlist' | 'subscriptions' | 'history' | 'trending' | 'people' | 'home' | 'lists' | 'trailers' | 'tracker';
 
 function App() {
   // Remove global usePlaylist call
@@ -37,7 +38,7 @@ function App() {
   // Initialize activeSection from URL or default to 'home'
   const [activeSection, setActiveSection] = useState<Section>(() => {
     const path = window.location.pathname.substring(1);
-    return (path === 'home' || path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'lists' || path === 'trailers') 
+    return (path === 'home' || path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'lists' || path === 'trailers' || path === 'tracker') 
       ? path as Section 
       : 'home';
   });
@@ -70,7 +71,7 @@ function App() {
         // Don't change active section for detail pages
         return;
       }
-      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'home' || path === 'lists' || path === 'trailers') {
+      if (path === 'playlist' || path === 'subscriptions' || path === 'history' || path === 'trending' || path === 'people' || path === 'home' || path === 'lists' || path === 'trailers' || path === 'tracker') {
         setActiveSection(path as Section);
       } else {
         setActiveSection('home');
@@ -348,6 +349,31 @@ function App() {
               </div>
               <Navigation 
                 activeSection="trailers"
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          }
+        />
+        <Route
+          path="/tracker"
+          element={
+            <div>
+              <Header
+                darkMode={darkMode}
+                onThemeToggle={toggleTheme}
+                isPartialLoading={isPartialLoading}
+                onPartialLoadingToggle={togglePartialLoading}
+              />
+              <div className="container mx-auto px-4 sm:px-6 py-6">
+                <main className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-sm p-6">
+                  <Tracker />
+                </main>
+                <footer className="mt-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <p>© 2025 WhoJoshi Subscription Manager</p>
+                </footer>
+              </div>
+              <Navigation 
+                activeSection="tracker"
                 onSectionChange={handleSectionChange}
               />
             </div>

@@ -6,10 +6,11 @@ import {
   Film,
   Clapperboard,
   User,
-  List
+  List,
+  TrendingUp
 } from "lucide-react";
 
-type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists' | 'trailers';
+type Section = 'home' | 'playlist' | 'subscriptions' | 'trending' | 'people' | 'lists' | 'trailers' | 'tracker';
 
 interface NavigationProps {
   activeSection: Section;
@@ -59,6 +60,12 @@ export function Navigation({ activeSection, onSectionChange }: NavigationProps) 
       icon: <List className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
       onClick: () => onSectionChange('lists'),
       isActive: activeSection === 'lists'
+    },
+    {
+      title: "Tracker",
+      icon: <TrendingUp className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+      onClick: () => onSectionChange('tracker'),
+      isActive: activeSection === 'tracker'
     },
   ];
 
